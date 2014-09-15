@@ -1,3 +1,4 @@
+Copyright (c) 2011-2013 Felix Geisendörfer, Andrew Kelley
 Copyright (c) 2014, Walmart and other contributors.
 All rights reserved.
 
@@ -26,3 +27,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                                   *   *   *
 
 The complete list of contributors can be found at: https://github.com/hapijs/pez/graphs/contributors
+
+This work is based extensively on https://github.com/andrewrk/node-multiparty which in turn is based
+on https://github.com/felixge/node-formidable, each with their respective licenses provided at the
+specified links.
+
+
+
