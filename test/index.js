@@ -1,5 +1,8 @@
 // Load modules
 
+var Events = require('events');
+var Stream = require('stream');
+var Hoek = require('hoek');
 var Lab = require('lab');
 var Pez = require('..');
 var Shot = require('shot');
@@ -23,7 +26,7 @@ describe('Dispenser', function () {
 
     var simulate = function (payload, boundary, callback) {
 
-        var req = Wreck.toReadableStream(payload);
+        var req = new internals.Payload(payload);
         req.headers = { 'content-type': 'multipart/form-data; boundary="' + boundary + '"' };
 
         var dispenser = new Pez.Dispenser({ boundary: boundary });
@@ -130,6 +133,52 @@ describe('Dispenser', function () {
         });
     });
 
+    it('parses payload in chunks', function (done) {
+
+        var payload = [
+            'pre\r\nemble\r\n',
+            '--AaB03x\r\n',
+            'content-disposition: form-data; name="field1"\r\n',
+            '\r\n',
+            'one\r\ntwo\r\n',
+            '--AaB03x\r\n',
+            'content-disposition: form-data; name="pics"; filename="file.bin"\r\n',
+            'Content-Type: text/plain\r\n',
+            '\r\n',
+            'aliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxc',
+            'aliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxc',
+            'aliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxc',
+            'aliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxc',
+            'aliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxc',
+            'aliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxc',
+            'aliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxc\r\n',
+            '--AaB03x--'
+        ];
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.not.exist;
+            expect(data).to.deep.equal({
+                preamble: {
+                    value: 'pre\r\nemble'
+                },
+                field1: {
+                    value: 'one\r\ntwo'
+                },
+                pics: {
+                    value: 'aliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxc',
+                    headers: {
+                        'content-disposition': 'form-data; name=\"pics\"; filename=\"file.bin\"',
+                        'content-type': 'text/plain'
+                    },
+                    filename: 'file.bin'
+                }
+            });
+
+            done();
+        });
+    });
+
     it('parses payload without trailing crlf', function (done) {
 
         var payload =
@@ -187,6 +236,28 @@ describe('Dispenser', function () {
         });
     });
 
+    it('parses single part without epilogue', function (done) {
+
+        var payload =
+            '--AaB03x  \r\n' +
+            'content-disposition: form-data; name="field"\r\n' +
+            '\r\n' +
+            'value\r\n' +
+            '--AaB03x--\r\n';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.not.exist;
+            expect(data).to.deep.equal({
+                field: {
+                    value: 'value'
+                }
+            });
+
+            done();
+        });
+    });
+
     it('reads header over multiple lines', function (done) {
 
         var payload =
@@ -222,6 +293,77 @@ describe('Dispenser', function () {
 
             expect(err).to.exist;
             expect(err.message).to.equal('Invalid header continuation without valid declaration on previous line');
+
+            done();
+        });
+    });
+
+    it('errors on missing terminator', function (done) {
+
+        var payload =
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="field"\r\n' +
+            '\r\n' +
+            'value\r\n' +
+            '--AaB03x';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.exist;
+            expect(err.message).to.equal('Missing end boundary');
+
+            done();
+        });
+    });
+
+    it('errors on missing preamble terminator (\\n)', function (done) {
+
+        var payload =
+            'preamble--AaB03x\r\n' +
+            'content-disposition: form-data; name="field"\r\n' +
+            '\r\n' +
+            'value\r\n' +
+            '--AaB03x--';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.exist;
+            expect(err.message).to.equal('Preamble missing CRLF terminator');
+
+            done();
+        });
+    });
+
+    it('errors on missing preamble terminator (\\r)', function (done) {
+
+        var payload =
+            'preamble\n--AaB03x\r\n' +
+            'content-disposition: form-data; name="field"\r\n' +
+            '\r\n' +
+            'value\r\n' +
+            '--AaB03x--';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.exist;
+            expect(err.message).to.equal('Preamble missing CRLF terminator');
+
+            done();
+        });
+    });
+
+    it('errors on incomplete part', function (done) {
+
+        var payload =
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="field"\r\n' +
+            '\r\n' +
+            'value\r\n';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.exist;
+            expect(err.message).to.equal('Incomplete multipart payload');
 
             done();
         });
@@ -320,6 +462,75 @@ describe('Dispenser', function () {
 
             done();
         });
+    });
+
+    it('errors on aborted request', function (done) {
+
+        var req = new internals.Payload('--AaB03x\r\n', true);
+        req.headers = { 'content-type': 'multipart/form-data; boundary="AaB03x"' };
+
+        var dispenser = new Pez.Dispenser({ boundary: 'AaB03x' });
+
+        dispenser.once('error', function (err) {
+
+            expect(err).to.exist;
+            expect(err.message).to.equal('Client request aborted');
+            done();
+        });
+
+        req.pipe(dispenser);
+        req.emit('aborted');
+    });
+
+    it('parses direct write', function (done) {
+
+        var dispenser = new Pez.Dispenser({ boundary: 'AaB03x' });
+
+        dispenser.on('field', function (name, value) {
+
+            expect(name).to.equal('field1');
+            expect(value).to.equal('value');
+            done();
+        });
+
+        dispenser.write('--AaB03x\r\n' +
+            'content-disposition: form-data; name="field1"\r\n' +
+            '\r\n' +
+            'value\r\n' +
+            '--AaB03x--');
+
+        dispenser.end();
+    });
+
+    it('ignores write after error', function (done) {
+
+        var dispenser = new Pez.Dispenser({ boundary: 'AaB03x' });
+
+        dispenser.on('field', function (name, value) {
+
+            dispenser.write('--AaB03x\r\n' +
+                'content-disposition: form-data; name="field1"\r\n' +
+                '\r\n' +
+                'value\r\n' +
+                '--AaB03x*');
+
+            dispenser.write('--AaB03x\r\n' +
+                'content-disposition: form-data; name="field1"\r\n' +
+                '\r\n' +
+                'value\r\n' +
+                '--AaB03x*');
+        });
+
+        dispenser.once('error', function (err) {
+
+            done();
+        });
+
+        dispenser.write('--AaB03x\r\n' +
+            'content-disposition: form-data; name="field1"\r\n' +
+            '\r\n' +
+            'value\r\n' +
+            '--AaB03x*');
     });
 });
 
@@ -440,3 +651,27 @@ describe('contentDisposition()', function (done) {
         done();
     });
 });
+
+
+internals.Payload = function (payload, err) {
+
+    Stream.Readable.call(this);
+
+    this._data = [].concat(payload);
+    this._position = 0;
+    this._err = err;
+};
+
+Hoek.inherits(internals.Payload, Stream.Readable);
+
+
+internals.Payload.prototype._read = function (size) {
+
+    var chunk = this._data[this._position++];
+    if (chunk) {
+        this.push(chunk);
+    }
+    else if (!this._err) {
+        this.push(null);
+    }
+};
