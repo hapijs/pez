@@ -165,19 +165,76 @@ describe('Dispenser', function () {
         });
     });
 
-    it('errors on invalid part header (missing name)', function (done) {
+    it('ignores whitespace after boundary', function (done) {
+
+        var payload =
+            '--AaB03x  \r\n' +
+            'content-disposition: form-data; name="field"\r\n' +
+            '\r\n' +
+            'value\r\n' +
+            '--AaB03x--';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.not.exist;
+            expect(data).to.deep.equal({
+                field: {
+                    value: 'value'
+                }
+            });
+
+            done();
+        });
+    });
+
+    it('reads header over multiple lines', function (done) {
 
         var payload =
             '--AaB03x\r\n' +
-            'content-disposition: form-data; name="field1"\r\n' +
+            'content-disposition:\r\n form-data; name="field"\r\n' +
+            '\r\n' +
+            'value\r\n' +
+            '--AaB03x--';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.not.exist;
+            expect(data).to.deep.equal({
+                field: {
+                    value: 'value'
+                }
+            });
+
+            done();
+        });
+    });
+
+    it('errors on partial header over multiple lines', function (done) {
+
+        var payload =
+            '--AaB03x\r\n' +
+            ' form-data; name="field"\r\n' +
+            '\r\n' +
+            'value\r\n' +
+            '--AaB03x--';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.exist;
+            expect(err.message).to.equal('Invalid header continuation without valid declaration on previous line');
+
+            done();
+        });
+    });
+
+    it('errors on invalid part header (missing field name)', function (done) {
+
+        var payload =
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="field"\r\n' +
             ': invalid\r\n' +
             '\r\n' +
-            'one\r\ntwo\r\n' +
-            '--AaB03x\r\n' +
-            'content-disposition: form-data; name="pics"; filename="file1.txt"\r\n' +
-            'Content-Type: text/plain\r\n' +
-            '\r\n' +
-            'some content\r\r\n' +
+            'content\r\n' +
             '--AaB03x--';
 
         simulate(payload, 'AaB03x', function (err, data) {
@@ -193,21 +250,73 @@ describe('Dispenser', function () {
 
         var payload =
             '--AaB03x\r\n' +
-            'content-disposition: form-data; name="field1"\r\n' +
+            'content-disposition: form-data; name="field"\r\n' +
             'invalid\r\n' +
             '\r\n' +
-            'one\r\ntwo\r\n' +
-            '--AaB03x\r\n' +
-            'content-disposition: form-data; name="pics"; filename="file1.txt"\r\n' +
-            'Content-Type: text/plain\r\n' +
-            '\r\n' +
-            'some content\r\r\n' +
+            'content\r\n' +
             '--AaB03x--';
 
         simulate(payload, 'AaB03x', function (err, data) {
 
             expect(err).to.exist;
             expect(err.message).to.equal('Invalid header missing colon separator');
+
+            done();
+        });
+    });
+
+    it('errors on missing content-disposition', function (done) {
+
+        var payload =
+            '--AaB03x\r\n' +
+            '\r\n' +
+            'content\r\n' +
+            '--AaB03x--';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.exist;
+            expect(err.message).to.equal('Missing content-disposition header');
+
+            done();
+        });
+    });
+
+    it('errors on invalid text after boundary', function (done) {
+
+        var payload =
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="field"\r\n' +
+            '\r\n' +
+            'content\r\n' +
+            '--AaB03xc\r\n' +
+            'content-disposition: form-data; name="field"\r\n' +
+            '\r\n' +
+            'content\r\n' +
+            '--AaB03x--\r\n';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.exist;
+            expect(err.message).to.equal('Only white space allowed after boundary');
+
+            done();
+        });
+    });
+
+    it('errors on invalid text after boundary at end', function (done) {
+
+        var payload =
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="field"\r\n' +
+            '\r\n' +
+            'content\r\n' +
+            '--AaB03xc';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.exist;
+            expect(err.message).to.equal('Only white space allowed after boundary at end');
 
             done();
         });
