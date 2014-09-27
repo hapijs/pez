@@ -675,3 +675,41 @@ internals.Payload.prototype._read = function (size) {
         this.push(null);
     }
 };
+
+
+internals.Recorder = function () {
+
+    Stream.Writable.call(this);
+
+    this.buffers = [];
+    this.nexts = [];
+    this.length = 0;
+};
+
+Hoek.inherits(internals.Recorder, Stream.Writable);
+
+
+internals.Recorder.prototype._write = function (chunk, encoding, next) {
+
+    this.length += chunk.length;
+    this.buffers.push(chunk);
+    this.nexts.push(next);
+    this.emit('ping');
+};
+
+
+internals.Recorder.prototype.collect = function () {
+
+    var buffer = (this.buffers.length === 0 ? new Buffer(0) : (this.buffers.length === 1 ? this.buffers[0] : Buffer.concat(this.buffers, this.length)));
+    return buffer;
+};
+
+
+internals.Recorder.prototype.next = function () {
+
+    for (var i = 0, il = this.nexts.length; i < il; ++i) {
+        this.nexts[i]();
+    }
+
+    this.nexts = [];
+};
