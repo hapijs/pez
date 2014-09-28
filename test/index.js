@@ -2,6 +2,7 @@
 
 var Events = require('events');
 var Stream = require('stream');
+var B64 = require('b64');
 var Hoek = require('hoek');
 var Lab = require('lab');
 var Pez = require('..');
@@ -100,6 +101,7 @@ describe('Dispenser', function () {
             'one\r\ntwo\r\n' +
             '--AaB03x\r\n' +
             'content-disposition: form-data; name="pics"; filename="file1.txt"\r\n' +
+            'content-transfer-encoding: 7bit\r\n' +
             'Content-Type: text/plain\r\n' +
             '\r\n' +
             'some content\r\nwith \rnewline\r\r\n' +
@@ -123,6 +125,7 @@ describe('Dispenser', function () {
                     value: 'some content\r\nwith \rnewline\r',
                     headers: {
                         'content-disposition': 'form-data; name=\"pics\"; filename=\"file1.txt\"',
+                        'content-transfer-encoding': '7bit',
                         'content-type': 'text/plain'
                     },
                     filename: 'file1.txt'
@@ -273,6 +276,34 @@ describe('Dispenser', function () {
             expect(data).to.deep.equal({
                 field: {
                     value: 'value'
+                }
+            });
+
+            done();
+        });
+    });
+
+    it('parses b64 file', function (done) {
+
+        var payload =
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="field"; filename="file.txt"\r\n' +
+            'content-transfer-encoding: base64\r\n' +
+            '\r\n' +
+            B64.encode(new Buffer('this is the content of the file')) + '\r\n' +
+            '--AaB03x--';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.not.exist;
+            expect(data).to.deep.equal({
+                field: {
+                    value: 'this is the content of the file',
+                    headers: {
+                        'content-disposition': 'form-data; name="field"; filename="file.txt"',
+                        'content-transfer-encoding': 'base64'
+                    },
+                    filename: 'file.txt'
                 }
             });
 
