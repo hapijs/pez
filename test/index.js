@@ -1,8 +1,11 @@
 // Load modules
 
 var Events = require('events');
+var Http = require('http');
 var Stream = require('stream');
 var B64 = require('b64');
+var FormData = require('form-data');
+var Fs = require('fs');
 var Hoek = require('hoek');
 var Lab = require('lab');
 var Pez = require('..');
@@ -591,6 +594,48 @@ describe('Dispenser', function () {
             });
             done();
         });
+    });
+
+    it('uploads a standard text file', function (done) {
+
+        Http.createServer(function (req, res) {
+
+            var payload = '';
+
+            req.on('data', function (chunk) {
+
+                payload += chunk;
+            });
+
+            req.on('end', function () {
+
+                // Pull out the boundary value
+                var boundary = payload.match(/-(\d+)/);
+                payload = payload.replace(/-{2,}/g, '--');
+
+                simulate(payload, boundary[1], function (err, result) {
+
+                    expect(result).to.deep.equal({
+                        file1: {
+                            filename: 'file1.txt',
+                            headers: {
+                                'content-disposition': 'form-data; name="file1"; filename="file1.txt"',
+                                'content-type': 'text/plain'
+                            },
+                            value: 'I am a plain text file'
+                        }
+                    });
+                    done();
+                });
+            });
+        }).listen(1337, '127.0.0.1');
+
+        var form = new FormData();
+        form.append('file1', Fs.createReadStream('./test/fixtures/http/file1.txt'));
+
+        Wreck.post('http://127.0.0.1:1337', {
+            payload: form, headers: form.getHeaders()
+        }, function (err, res, payload) {});
     });
 });
 
