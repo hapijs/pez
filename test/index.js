@@ -563,6 +563,35 @@ describe('Dispenser', function () {
             'value\r\n' +
             '--AaB03x*');
     });
+
+    it('parses a standard text file', function (done) {
+
+        var payload =
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="file"; filename="file1.txt"\r\n' +
+            'content-transfer-encoding: 7bit\r\n' +
+            'Content-Type: text/plain\r\n' +
+            '\r\n' +
+            'I am a plain text file\r\n' +
+            '--AaB03x--\r\n';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.not.exist;
+            expect(data).to.deep.equal({
+                file: {
+                    filename: 'file1.txt',
+                    value: 'I am a plain text file',
+                    headers: {
+                        'content-disposition': 'form-data; name="file"; filename="file1.txt"',
+                        'content-transfer-encoding': '7bit',
+                        'content-type': 'text/plain'
+                    }
+                }
+            });
+            done();
+        });
+    });
 });
 
 describe('contentType()', function () {
