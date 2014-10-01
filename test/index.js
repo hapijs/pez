@@ -19,13 +19,13 @@ var internals = {};
 
 internals.setFileValues = function () {
 
-    internals.png = Fs.readFileSync('./test/fixtures/image.png', {
+    internals.png = Fs.readFileSync('./test/files/image.png', {
         encoding: 'base64'
     });
-    internals.binary = Fs.readFileSync('./test/fixtures/image.png', {
+    internals.binary = Fs.readFileSync('./test/files/image.png', {
         encoding: 'base64'
     });
-    internals.blankgif = Fs.readFileSync('./test/fixtures/blank.gif', {
+    internals.blankgif = Fs.readFileSync('./test/files/blank.gif', {
         encoding: 'base64'
     });
 };
@@ -590,7 +590,7 @@ describe('Dispenser', function () {
             port = server.address().port;
 
             var form = new FormData();
-            form.append('file1', Fs.createReadStream('./test/fixtures/file1.txt'));
+            form.append('file1', Fs.createReadStream('./test/files/file1.txt'));
 
             Wreck.post('http://127.0.0.1:' + port, {
                 payload: form, headers: form.getHeaders()
@@ -910,7 +910,7 @@ describe('Dispenser', function () {
             var CRLF = '\r\n';
             var form = new FormData();
             // If you create a readStream, this no longer functions
-            form.append('file', Fs.createReadStream('./test/fixtures/file1.txt'), {
+            form.append('file', Fs.createReadStream('./test/files/file1.txt'), {
                 header: '--' + form.getBoundary() + CRLF + 'content-disposition: form-data; name="file"; filename="'
                 + filename + '"'
                 + CRLF + 'content-type: text/plain'
