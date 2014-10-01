@@ -53,64 +53,8 @@ describe('Dispenser', function () {
         var req = new internals.Payload(payload);
         req.headers = { 'content-type': contentType };
 
-        var dispenser = new Pez.Dispenser({ boundary: boundary });
-
-        var data = {};
-        var set = function (name, value, headers, filename) {
-
-            var item = { value: value };
-            if (headers) {
-                item.headers = headers;
-            }
-
-            if (filename) {
-                item.filename = filename;
-            }
-
-            if (!data.hasOwnProperty(name)) {
-                data[name] = item;
-            }
-            else if (Array.isArray(data[name])) {
-                data[name].push(item);
-            }
-            else {
-                data[name] = [data[name], item];
-            }
-        };
-
-        dispenser.on('preamble', function (chunk) {
-
-            set('preamble', chunk.toString());
-        });
-
-        dispenser.on('epilogue', function (value) {
-
-            set('epilogue', value);
-        });
-
-        dispenser.on('part', function (part) {
-
-            Wreck.read(part, {}, function (err, payload) {
-
-                set(part.name, payload.toString(), part.headers, part.filename);
-            });
-        });
-
-        dispenser.on('field', function (name, value) {
-
-            set(name, value);
-        });
-
-        dispenser.once('close', function () {
-
-            callback(null, data);
-        });
-
-        dispenser.once('error', function (err) {
-
-            return callback(err);
-        });
-
+        //var dispenser = new Pez.Dispenser({ boundary: boundary });
+        var dispenser = internals.interceptor(boundary, 'utf8', callback);
         req.pipe(dispenser);
     };
 
@@ -622,13 +566,9 @@ describe('Dispenser', function () {
         var server = Http.createServer(function (req, res) {
 
             var contentType = Pez.contentType(req.headers['content-type']);
-            var dispenser = internals.interceptor(contentType.boundary, function (err, result) {
+            var dispenser = internals.interceptor(contentType.boundary, 'utf8', function (err, result) {
 
                 expect(err).to.not.exist;
-
-                // Still a buffer at this point
-                result.file1.value = result.file1.value.toString();
-
                 expect(result).to.deep.equal({
                     file1: {
                         filename: 'file1.txt',
@@ -752,13 +692,9 @@ describe('Dispenser', function () {
         var server = Http.createServer(function (req, res) {
 
             var contentType = Pez.contentType(req.headers['content-type']);
-            var dispenser = internals.interceptor(contentType.boundary, function (err, result) {
+            var dispenser = internals.interceptor(contentType.boundary, 'base64', function (err, result) {
 
                 expect(err).to.not.exist;
-
-                // Still a buffer at this point
-                result.sticker.value = result.sticker.value.toString('base64');
-
                 expect(result).to.deep.equal({
                     sticker: {
                         filename: 'image.png',
@@ -832,13 +768,9 @@ describe('Dispenser', function () {
         var server = Http.createServer(function (req, res) {
 
             var contentType = Pez.contentType(req.headers['content-type']);
-            var dispenser = internals.interceptor(contentType.boundary, function (err, result) {
+            var dispenser = internals.interceptor(contentType.boundary, 'base64', function (err, result) {
 
                 expect(err).to.not.exist;
-
-                // Still a buffer at this point
-                result.file.value = result.file.value.toString('base64');
-
                 expect(result).to.deep.equal({
                     file: {
                         filename: 'blank.gif',
@@ -883,13 +815,9 @@ describe('Dispenser', function () {
         var server = Http.createServer(function (req, res) {
 
             var contentType = Pez.contentType(req.headers['content-type']);
-            var dispenser = internals.interceptor(contentType.boundary, function (err, result) {
+            var dispenser = internals.interceptor(contentType.boundary, 'base64', function (err, result) {
 
                 expect(err).to.not.exist;
-
-                // Still a buffer at this point
-                result.file.value = result.file.value.toString('base64');
-
                 expect(result).to.deep.equal({
                     file: {
                         filename: 'binaryfile.tar.gz',
@@ -956,13 +884,9 @@ describe('Dispenser', function () {
         var server = Http.createServer(function (req, res) {
 
             var contentType = Pez.contentType(req.headers['content-type']);
-            var dispenser = internals.interceptor(contentType.boundary, function (err, result) {
+            var dispenser = internals.interceptor(contentType.boundary, 'utf8', function (err, result) {
 
                 expect(err).to.not.exist;
-
-                // Still a buffer at this point
-                result.file.value = result.file.value.toString();
-
                 expect(result).to.deep.equal({
                     file: {
                         filename: filename,
@@ -1181,7 +1105,7 @@ internals.Recorder.prototype.next = function () {
     this.nexts = [];
 };
 
-internals.interceptor = function (boundary, callback) {
+internals.interceptor = function (boundary, encoding, callback) {
 
 
     var dispenser = new Pez.Dispenser({ boundary: boundary });
@@ -1223,7 +1147,7 @@ internals.interceptor = function (boundary, callback) {
 
         Wreck.read(part, {}, function (err, payload) {
 
-            set(part.name, payload, part.headers, part.filename);
+            set(part.name, payload.toString(encoding), part.headers, part.filename);
         });
     });
 
