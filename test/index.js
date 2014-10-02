@@ -910,7 +910,7 @@ describe('Dispenser', function () {
             '--AaB03x\r\n' +
             'content-disposition: form-data; name="file"; filename=""\r\n' +
             '\r\n' +
-            '   \r\n' +
+            '\r\n' +
             '--AaB03x--\r\n';
 
         simulate(payload, 'AaB03x', function (err, data) {
@@ -918,7 +918,35 @@ describe('Dispenser', function () {
             expect(err).to.not.exist;
             expect(data).to.deep.equal({
                 file: {
-                    value: "   "
+                    value: ""
+                }
+            });
+            done();
+        });
+    });
+
+    it('parses a file without a filename', function (done) {
+
+        var payload =
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="file"\r\n' +
+            'content-transfer-encoding: base64\r\n' +
+            'Content-Type: image/gif\r\n' +
+            '\r\n' +
+            B64.encode(new Buffer(internals.blankgif)) + '\r\n' +
+            '--AaB03x--\r\n';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.not.exist;
+            expect(data).to.deep.equal({
+                file: {
+                    value: internals.blankgif,
+                    headers: {
+                        'content-disposition': 'form-data; name="file"; filename="blank.gif"',
+                        'content-transfer-encoding': 'base64',
+                        'content-type': 'image/gif'
+                    }
                 }
             });
             done();
