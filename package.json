@@ -6,15 +6,17 @@
   "main": "index",
   "keywords": [
     "HTTP",
-    "router"
+    "multipart",
+    "parser"
   ],
   "engines": {
-    "node": ">=0.10.30"
+    "node": ">=0.10.32"
   },
   "dependencies": {
-    "hoek": "2.x.x",
     "b64": "2.x.x",
     "boom": "2.x.x",
+    "content": "1.x.x",
+    "hoek": "2.x.x",
     "nigel": "1.x.x"
   },
   "devDependencies": {

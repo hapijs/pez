@@ -4,6 +4,7 @@ var Events = require('events');
 var Http = require('http');
 var Stream = require('stream');
 var B64 = require('b64');
+var Content = require('content');
 var FormData = require('form-data');
 var Fs = require('fs');
 var Hoek = require('hoek');
@@ -16,23 +17,6 @@ var Wreck = require('wreck');
 // Declare internals
 
 var internals = {};
-
-
-internals.png = Fs.readFileSync('./test/files/image.png', {
-    encoding: 'base64'
-});
-internals.bigPng = Fs.readFileSync('./test/files/large.png', {
-    encoding: 'base64'
-});
-internals.binary = Fs.readFileSync('./test/files/image.png', {
-    encoding: 'base64'
-});
-internals.blankgif = Fs.readFileSync('./test/files/blank.gif', {
-    encoding: 'base64'
-});
-internals.video = Fs.readFileSync('./test/files/video.mp4', {
-    encoding: 'base64'
-});
 
 
 // Test shortcuts
@@ -55,7 +39,7 @@ describe('Dispenser', function () {
         var req = new internals.Payload(payload);
         req.headers = { 'content-type': contentType };
 
-        var dispenser = internals.interceptor(boundary, 'utf8', callback);
+        var dispenser = internals.interceptor(boundary, callback);
         req.pipe(dispenser);
     };
 
@@ -566,8 +550,8 @@ describe('Dispenser', function () {
         var port = 0;
         var server = Http.createServer(function (req, res) {
 
-            var contentType = Pez.contentType(req.headers['content-type']);
-            var dispenser = internals.interceptor(contentType.boundary, 'utf8', function (err, result) {
+            var contentType = Content.type(req.headers['content-type']);
+            var dispenser = internals.interceptor(contentType.boundary, function (err, result) {
 
                 expect(err).to.not.exist;
                 expect(result).to.deep.equal({
@@ -595,7 +579,7 @@ describe('Dispenser', function () {
 
             Wreck.post('http://127.0.0.1:' + port, {
                 payload: form, headers: form.getHeaders()
-            }, function (err, res, payload) {});
+            }, function (err, res, payload) { });
         });
     });
 
@@ -660,13 +644,15 @@ describe('Dispenser', function () {
 
     it('parses a png file', function (done) {
 
+        var png = Fs.readFileSync('./test/files/image.png');
+
         var payload =
             '--AaB03x\r\n' +
             'content-disposition: form-data; name="sticker"; filename="image.png"\r\n' +
             'content-transfer-encoding: base64\r\n' +
-            'Content-Type: img/png\r\n' +
+            'Content-Type: image/png\r\n' +
             '\r\n' +
-            B64.encode(new Buffer(internals.png)) + '\r\n' +
+            B64.encode(png) + '\r\n' +
             '--AaB03x--\r\n';
 
         simulate(payload, 'AaB03x', function (err, data) {
@@ -674,13 +660,13 @@ describe('Dispenser', function () {
             expect(err).to.not.exist;
             expect(data).to.deep.equal({
                 sticker: {
-                    filename: 'image.png',
-                    value: internals.png,
+                    value: png.toString(),
                     headers: {
                         'content-disposition': 'form-data; name="sticker"; filename="image.png"',
                         'content-transfer-encoding': 'base64',
-                        'content-type': 'img/png'
-                    }
+                        'content-type': 'image/png'
+                    },
+                    filename: 'image.png'
                 }
             });
             done();
@@ -689,99 +675,72 @@ describe('Dispenser', function () {
 
     it('parses an uploaded png file', function (done) {
 
-        var port = 0;
         var server = Http.createServer(function (req, res) {
 
-            var contentType = Pez.contentType(req.headers['content-type']);
-            var dispenser = internals.interceptor(contentType.boundary, 'base64', function (err, result) {
+            var contentType = Content.type(req.headers['content-type']);
+            var dispenser = internals.interceptor(contentType.boundary, function (err, result) {
 
                 expect(err).to.not.exist;
+
                 expect(result).to.deep.equal({
                     sticker: {
-                        filename: 'image.png',
+                        value: Fs.readFileSync('./test/files/image.png').toString(),
                         headers: {
                             'content-disposition': 'form-data; name="sticker"; filename="image.png"',
-                            'content-transfer-encoding': "base64",
-                            "content-type": "image/png"
+                            'content-type': 'image/png'
                         },
-                        value: internals.png
+                        filename: 'image.png'
                     }
                 });
                 done();
             });
 
             req.pipe(dispenser);
-        }).listen(port, '127.0.0.1');
+        }).listen(0, '127.0.0.1');
 
         server.once('listening', function () {
 
-            port = server.address().port;
-
-            var CRLF = '\r\n';
             var form = new FormData();
-            // If you create a readStream, this no longer functions
-            form.append('sticker', internals.png, {
-                header: '--' + form.getBoundary() + CRLF + 'content-disposition: form-data; name="sticker"; filename="image.png"'
-                + CRLF + 'content-transfer-encoding:base64'
-                + CRLF + 'content-type: image/png'
-                + CRLF + CRLF
-            });
-
-            Wreck.request('POST','http://127.0.0.1:' + port, {
-                payload: form,
-                headers: form.getHeaders()
-            }, function (err, res, payload) {});
+            form.append('sticker', Fs.createReadStream('./test/files/image.png'));
+            Wreck.request('POST', 'http://127.0.0.1:' + server.address().port, { payload: form, headers: form.getHeaders() });
         });
     });
 
     it('parses a large uploaded png file', function (done) {
 
-        var port = 0;
         var server = Http.createServer(function (req, res) {
 
-            var contentType = Pez.contentType(req.headers['content-type']);
-            var dispenser = internals.interceptor(contentType.boundary, 'base64', function (err, result) {
+            var contentType = Content.type(req.headers['content-type']);
+            var dispenser = internals.interceptor(contentType.boundary, function (err, result) {
 
                 expect(err).to.not.exist;
                 expect(result).to.deep.equal({
                     sticker: {
-                        filename: 'image.png',
+                        value: Fs.readFileSync('./test/files/large.png').toString(),
                         headers: {
-                            'content-disposition': 'form-data; name="sticker"; filename="image.png"',
-                            'content-transfer-encoding': "base64",
-                            "content-type": "image/png"
+                            'content-disposition': 'form-data; name="sticker"; filename="large.png"',
+                            'content-type': 'image/png'
                         },
-                        value: internals.bigPng
+                        filename: 'large.png'
                     }
                 });
                 done();
             });
 
             req.pipe(dispenser);
-        }).listen(port, '127.0.0.1');
+        }).listen(0, '127.0.0.1');
 
         server.once('listening', function () {
 
-            port = server.address().port;
-
-            var CRLF = '\r\n';
             var form = new FormData();
-            // If you create a readStream, this no longer functions
-            form.append('sticker', internals.bigPng, {
-                header: '--' + form.getBoundary() + CRLF + 'content-disposition: form-data; name="sticker"; filename="image.png"'
-                + CRLF + 'content-transfer-encoding:base64'
-                + CRLF + 'content-type: image/png'
-                + CRLF + CRLF
-            });
-
-            Wreck.request('POST','http://127.0.0.1:' + port, {
-                payload: form,
-                headers: form.getHeaders()
-            }, function (err, res, payload) {});
+            form.append('sticker', Fs.createReadStream('./test/files/large.png'));
+            Wreck.request('POST', 'http://127.0.0.1:' + server.address().port, { payload: form, headers: form.getHeaders() });
         });
     });
 
     it('parses a blank gif file', function (done) {
+
+        var blankgif = Fs.readFileSync('./test/files/blank.gif');
 
         var payload =
             '--AaB03x\r\n' +
@@ -789,7 +748,7 @@ describe('Dispenser', function () {
             'content-transfer-encoding: base64\r\n' +
             'Content-Type: image/gif\r\n' +
             '\r\n' +
-            B64.encode(new Buffer(internals.blankgif)) + '\r\n' +
+            B64.encode(blankgif) + '\r\n' +
             '--AaB03x--\r\n';
 
         simulate(payload, 'AaB03x', function (err, data) {
@@ -798,7 +757,7 @@ describe('Dispenser', function () {
             expect(data).to.deep.equal({
                 file: {
                     filename: 'blank.gif',
-                    value: internals.blankgif,
+                    value: blankgif.toString(),
                     headers: {
                         'content-disposition': 'form-data; name="file"; filename="blank.gif"',
                         'content-transfer-encoding': 'base64',
@@ -812,95 +771,33 @@ describe('Dispenser', function () {
 
     it('parses an uploaded blank gif file', function (done) {
 
-        var port = 0;
         var server = Http.createServer(function (req, res) {
 
-            var contentType = Pez.contentType(req.headers['content-type']);
-            var dispenser = internals.interceptor(contentType.boundary, 'base64', function (err, result) {
+            var contentType = Content.type(req.headers['content-type']);
+            var dispenser = internals.interceptor(contentType.boundary, function (err, result) {
 
                 expect(err).to.not.exist;
                 expect(result).to.deep.equal({
                     file: {
-                        filename: 'blank.gif',
+                        value: Fs.readFileSync('./test/files/blank.gif').toString(),
                         headers: {
                             'content-disposition': 'form-data; name="file"; filename="blank.gif"',
-                            'content-transfer-encoding': 'base64',
                             'content-type': 'image/gif'
                         },
-                        value: internals.blankgif
+                        filename: 'blank.gif'
                     }
                 });
                 done();
             });
 
             req.pipe(dispenser);
-        }).listen(port, '127.0.0.1');
+        }).listen(0, '127.0.0.1');
 
         server.once('listening', function () {
 
-            port = server.address().port;
-
-            var CRLF = '\r\n';
             var form = new FormData();
-            // If you create a readStream, this no longer functions
-            form.append('sticker', internals.blankgif, {
-                header: '--' + form.getBoundary() + CRLF + 'content-disposition: form-data; name="file"; filename="blank.gif"'
-                + CRLF + 'content-transfer-encoding:base64'
-                + CRLF + 'content-type: image/gif'
-                + CRLF + CRLF
-            });
-
-            Wreck.request('POST','http://127.0.0.1:' + port, {
-                payload: form,
-                headers: form.getHeaders()
-            }, function (err, res, payload) {});
-        });
-    });
-
-    it('parses an uploaded binary file', function (done) {
-
-        var port = 0;
-        var server = Http.createServer(function (req, res) {
-
-            var contentType = Pez.contentType(req.headers['content-type']);
-            var dispenser = internals.interceptor(contentType.boundary, 'base64', function (err, result) {
-
-                expect(err).to.not.exist;
-                expect(result).to.deep.equal({
-                    file: {
-                        filename: 'binaryfile.tar.gz',
-                        headers: {
-                            'content-disposition': 'form-data; name="file"; filename="binaryfile.tar.gz"',
-                            'content-transfer-encoding': 'base64',
-                            'content-type': 'application/x-gzip'
-                        },
-                        value: internals.binary
-                    }
-                });
-                done();
-            });
-
-            req.pipe(dispenser);
-        }).listen(port, '127.0.0.1');
-
-        server.once('listening', function () {
-
-            port = server.address().port;
-
-            var CRLF = '\r\n';
-            var form = new FormData();
-            // If you create a readStream, this no longer functions
-            form.append('sticker', internals.binary, {
-                header: '--' + form.getBoundary() + CRLF + 'content-disposition: form-data; name="file"; filename="binaryfile.tar.gz"'
-                + CRLF + 'content-transfer-encoding:base64'
-                + CRLF + 'content-type: application/x-gzip'
-                + CRLF + CRLF
-            });
-
-            Wreck.request('POST','http://127.0.0.1:' + port, {
-                payload: form,
-                headers: form.getHeaders()
-            }, function (err, res, payload) {});
+            form.append('file', Fs.createReadStream('./test/files/blank.gif'));
+            Wreck.request('POST', 'http://127.0.0.1:' + server.address().port, { payload: form, headers: form.getHeaders() });
         });
     });
 
@@ -918,7 +815,10 @@ describe('Dispenser', function () {
             expect(err).to.not.exist;
             expect(data).to.deep.equal({
                 file: {
-                    value: ""
+                    value: '',
+                    headers: {
+                        'content-disposition': 'form-data; name="file"; filename=""'
+                    }
                 }
             });
             done();
@@ -927,13 +827,15 @@ describe('Dispenser', function () {
 
     it('parses a file without a filename', function (done) {
 
+        var blankgif = Fs.readFileSync('./test/files/blank.gif');
+
         var payload =
             '--AaB03x\r\n' +
-            'content-disposition: form-data; name="file"\r\n' +
+            'content-disposition: form-data; name="file"; filename=""\r\n' +
             'content-transfer-encoding: base64\r\n' +
             'Content-Type: image/gif\r\n' +
             '\r\n' +
-            B64.encode(new Buffer(internals.blankgif)) + '\r\n' +
+            B64.encode(blankgif) + '\r\n' +
             '--AaB03x--\r\n';
 
         simulate(payload, 'AaB03x', function (err, data) {
@@ -941,9 +843,9 @@ describe('Dispenser', function () {
             expect(err).to.not.exist;
             expect(data).to.deep.equal({
                 file: {
-                    value: internals.blankgif,
+                    value: blankgif.toString(),
                     headers: {
-                        'content-disposition': 'form-data; name="file"; filename="blank.gif"',
+                        'content-disposition': 'form-data; name="file"; filename=""',
                         'content-transfer-encoding': 'base64',
                         'content-type': 'image/gif'
                     }
@@ -953,62 +855,18 @@ describe('Dispenser', function () {
         });
     });
 
-    it('parses an uploaded plain text file with a weird filename', function (done) {
+    it('handles unusual filename', function (done) {
 
-        var port = 0;
-        var filename = ": \\ ? % * | %22 < > . ? ; ' @ # $ ^ & ( ) - _ = + { } [ ] ` ~.txt";
-        var server = Http.createServer(function (req, res) {
-
-            var contentType = Pez.contentType(req.headers['content-type']);
-            var dispenser = internals.interceptor(contentType.boundary, 'utf8', function (err, result) {
-
-                expect(err).to.not.exist;
-                expect(result).to.deep.equal({
-                    file: {
-                        filename: filename,
-                        headers: {
-                            'content-disposition': "form-data; name=\"file\"; filename=\": \\ ? % * | %22 < > . ? ; ' @ # $ ^ & ( ) - _ = + { } [ ] ` ~.txt\"",
-                            'content-type': 'text/plain'
-                        },
-                        value: 'I am a plain text file'
-                    }
-                });
-                done();
-            });
-
-            req.pipe(dispenser);
-        }).listen(port, '127.0.0.1');
-
-        server.once('listening', function () {
-
-            port = server.address().port;
-
-            var CRLF = '\r\n';
-            var form = new FormData();
-            // If you create a readStream, this no longer functions
-            form.append('file', Fs.createReadStream('./test/files/file1.txt'), {
-                header: '--' + form.getBoundary() + CRLF + 'content-disposition: form-data; name="file"; filename="'
-                + filename + '"'
-                + CRLF + 'content-type: text/plain'
-                + CRLF + CRLF
-            });
-
-            Wreck.request('POST','http://127.0.0.1:' + port, {
-                payload: form,
-                headers: form.getHeaders()
-            }, function (err, res, payload) {});
-        });
-    });
-
-    it('parses a mp4 file', function (done) {
+        var blankgif = Fs.readFileSync('./test/files/blank.gif');
+        var filename = ': \\ ? % * | %22 < > . ? ; \' @ # $ ^ & ( ) - _ = + { } [ ] ` ~.txt';
 
         var payload =
             '--AaB03x\r\n' +
-            'content-disposition: form-data; name="file"; filename="video.mp4"\r\n' +
+            'content-disposition: form-data; name="file"; filename="' + filename + '"\r\n' +
             'content-transfer-encoding: base64\r\n' +
-            'Content-Type: video/mp4\r\n' +
+            'Content-Type: image/gif\r\n' +
             '\r\n' +
-            B64.encode(new Buffer(internals.video)) + '\r\n' +
+            B64.encode(blankgif) + '\r\n' +
             '--AaB03x--\r\n';
 
         simulate(payload, 'AaB03x', function (err, data) {
@@ -1016,182 +874,17 @@ describe('Dispenser', function () {
             expect(err).to.not.exist;
             expect(data).to.deep.equal({
                 file: {
-                    filename: 'video.mp4',
-                    value: internals.video,
+                    value: blankgif.toString(),
                     headers: {
-                        'content-disposition': 'form-data; name="file"; filename="video.mp4"',
+                        'content-disposition': 'form-data; name="file"; filename="' + filename + '"',
                         'content-transfer-encoding': 'base64',
-                        'content-type': 'video/mp4'
-                    }
+                        'content-type': 'image/gif'
+                    },
+                    filename: filename
                 }
             });
             done();
         });
-    });
-
-    it('parses an uploaded mp4 file', function (done) {
-
-        var port = 0;
-        var server = Http.createServer(function (req, res) {
-
-            var contentType = Pez.contentType(req.headers['content-type']);
-            var dispenser = internals.interceptor(contentType.boundary, 'base64', function (err, result) {
-
-                expect(err).to.not.exist;
-                expect(result).to.deep.equal({
-                    file: {
-                        filename: 'video.mp4',
-                        headers: {
-                            'content-disposition': 'form-data; name="file"; filename="video.mp4"',
-                            'content-transfer-encoding': 'base64',
-                            'content-type': 'video/mp4'
-                        },
-                        value: internals.video
-                    }
-                });
-                done();
-            });
-
-            req.pipe(dispenser);
-        }).listen(port, '127.0.0.1');
-
-        server.once('listening', function () {
-
-            port = server.address().port;
-
-            var CRLF = '\r\n';
-            var form = new FormData();
-
-            form.append('file', internals.video, {
-                header: '--' + form.getBoundary() + CRLF + 'content-disposition: form-data; name="file"; filename="video.mp4"'
-                + CRLF + 'content-transfer-encoding:base64'
-                + CRLF + 'content-type: video/mp4'
-                + CRLF + CRLF
-            });
-
-            Wreck.request('POST','http://127.0.0.1:' + port, {
-                payload: form,
-                headers: form.getHeaders()
-            }, function (err, res, payload) {});
-        });
-    });
-});
-
-describe('contentType()', function () {
-
-    it('parses header', function (done) {
-
-        var contentType = Pez.contentType('application/json; some=property; and="another"');
-        expect(contentType.isBoom).to.not.exist;
-        expect(contentType.mime).to.equal('application/json');
-        expect(contentType.boundary).to.not.exist;
-        done();
-    });
-
-    it('parses header (only type)', function (done) {
-
-        var contentType = Pez.contentType('application/json');
-        expect(contentType.isBoom).to.not.exist;
-        expect(contentType.mime).to.equal('application/json');
-        expect(contentType.boundary).to.not.exist;
-        done();
-    });
-
-    it('parses header (boundary)', function (done) {
-
-        var contentType = Pez.contentType('application/json; boundary=abcdefghijklm');
-        expect(contentType.isBoom).to.not.exist;
-        expect(contentType.mime).to.equal('application/json');
-        expect(contentType.boundary).to.equal('abcdefghijklm');
-        done();
-    });
-
-    it('parses header (quoted boundary)', function (done) {
-
-        var contentType = Pez.contentType('application/json; boundary="abcdefghijklm"');
-        expect(contentType.isBoom).to.not.exist;
-        expect(contentType.mime).to.equal('application/json');
-        expect(contentType.boundary).to.equal('abcdefghijklm');
-        done();
-    });
-
-    it('errors on invalid header', function (done) {
-
-        var contentType = Pez.contentType('application/json; some');
-        expect(contentType.isBoom).to.exist;
-        done();
-    });
-
-    it('errors on multipart missing boundary', function (done) {
-
-        var contentType = Pez.contentType('multipart/form-data');
-        expect(contentType.isBoom).to.exist;
-        done();
-    });
-});
-
-describe('contentDisposition()', function (done) {
-
-    it('handles language filename', function (done) {
-
-        var header = 'form-data; name="file"; filename*=utf-8\'en\'with%20space';
-
-        expect(Pez.contentDisposition(header)).to.deep.equal({ name: 'file', filename: 'with space' });
-        done();
-    });
-
-    it('errors on invalid language filename', function (done) {
-
-        var header = 'form-data; name="file"; filename*=steve';
-
-        expect(Pez.contentDisposition(header).message).to.equal('Invalid content-disposition header format includes invalid parameters');
-        done();
-    });
-
-    it('errors on invalid format', function (done) {
-
-        var header = 'steve';
-
-        expect(Pez.contentDisposition(header).message).to.equal('Invalid content-disposition header format');
-        done();
-    });
-
-    it('errors on missing header', function (done) {
-
-        expect(Pez.contentDisposition('').message).to.equal('Missing content-disposition header');
-        done();
-    });
-
-    it('errors on missing parameters', function (done) {
-
-        var header = 'form-data';
-
-        expect(Pez.contentDisposition(header).message).to.equal('Invalid content-disposition header missing parameters');
-        done();
-    });
-
-    it('errors on missing language value', function (done) {
-
-        var header = 'form-data; name="file"; filename*=';
-
-        expect(Pez.contentDisposition(header).message).to.equal('Invalid content-disposition header format includes invalid parameters');
-        done();
-    });
-
-    it('errors on invalid percent encoded language value', function (done) {
-
-        var header = 'form-data; name="file"; filename*=utf-8\'en\'with%vxspace';
-
-        expect(Pez.contentDisposition(header).message).to.equal('Invalid content-disposition header format includes invalid parameters');
-        done();
-    });
-
-    it('errors on missing name', function (done) {
-
-        var header = 'form-data; filename=x';
-
-        expect(Pez.contentDisposition(header).message).to.equal('Invalid content-disposition header missing name parameter');
-        done();
     });
 });
 
@@ -1257,7 +950,7 @@ internals.Recorder.prototype.next = function () {
     this.nexts = [];
 };
 
-internals.interceptor = function (boundary, encoding, callback) {
+internals.interceptor = function (boundary, callback) {
 
 
     var dispenser = new Pez.Dispenser({ boundary: boundary });
@@ -1299,7 +992,7 @@ internals.interceptor = function (boundary, encoding, callback) {
 
         Wreck.read(part, {}, function (err, payload) {
 
-            set(part.name, payload.toString(encoding), part.headers, part.filename);
+            set(part.name, payload.toString(), part.headers, part.filename);
         });
     });
 

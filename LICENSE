@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The complete list of contributors can be found at: https://github.com/hapijs/pez/graphs/contributors
 
-This work is based extensively on https://github.com/andrewrk/node-multiparty which in turn is based
+The tests used were initially based on https://github.com/andrewrk/node-multiparty which in turn is based
 on https://github.com/felixge/node-formidable, each with their respective licenses provided at the
 specified links.
 
