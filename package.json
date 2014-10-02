@@ -18,6 +18,7 @@
     "nigel": "1.x.x"
   },
   "devDependencies": {
+    "form-data": "0.1.x",
     "lab": "4.x.x",
     "shot": "1.x.x",
     "wreck": "5.x.x"
