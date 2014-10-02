@@ -17,20 +17,22 @@ var Wreck = require('wreck');
 
 var internals = {};
 
-internals.setFileValues = function () {
 
-    internals.png = Fs.readFileSync('./test/files/image.png', {
-        encoding: 'base64'
-    });
-    internals.binary = Fs.readFileSync('./test/files/image.png', {
-        encoding: 'base64'
-    });
-    internals.blankgif = Fs.readFileSync('./test/files/blank.gif', {
-        encoding: 'base64'
-    });
-};
-
-internals.setFileValues();
+internals.png = Fs.readFileSync('./test/files/image.png', {
+    encoding: 'base64'
+});
+internals.bigPng = Fs.readFileSync('./test/files/large.png', {
+    encoding: 'base64'
+});
+internals.binary = Fs.readFileSync('./test/files/image.png', {
+    encoding: 'base64'
+});
+internals.blankgif = Fs.readFileSync('./test/files/blank.gif', {
+    encoding: 'base64'
+});
+internals.video = Fs.readFileSync('./test/files/video.mp4', {
+    encoding: 'base64'
+});
 
 
 // Test shortcuts
@@ -53,7 +55,6 @@ describe('Dispenser', function () {
         var req = new internals.Payload(payload);
         req.headers = { 'content-type': contentType };
 
-        //var dispenser = new Pez.Dispenser({ boundary: boundary });
         var dispenser = internals.interceptor(boundary, 'utf8', callback);
         req.pipe(dispenser);
     };
@@ -733,6 +734,53 @@ describe('Dispenser', function () {
         });
     });
 
+    it('parses a large uploaded png file', function (done) {
+
+        var port = 0;
+        var server = Http.createServer(function (req, res) {
+
+            var contentType = Pez.contentType(req.headers['content-type']);
+            var dispenser = internals.interceptor(contentType.boundary, 'base64', function (err, result) {
+
+                expect(err).to.not.exist;
+                expect(result).to.deep.equal({
+                    sticker: {
+                        filename: 'image.png',
+                        headers: {
+                            'content-disposition': 'form-data; name="sticker"; filename="image.png"',
+                            'content-transfer-encoding': "base64",
+                            "content-type": "image/png"
+                        },
+                        value: internals.bigPng
+                    }
+                });
+                done();
+            });
+
+            req.pipe(dispenser);
+        }).listen(port, '127.0.0.1');
+
+        server.once('listening', function () {
+
+            port = server.address().port;
+
+            var CRLF = '\r\n';
+            var form = new FormData();
+            // If you create a readStream, this no longer functions
+            form.append('sticker', internals.bigPng, {
+                header: '--' + form.getBoundary() + CRLF + 'content-disposition: form-data; name="sticker"; filename="image.png"'
+                + CRLF + 'content-transfer-encoding:base64'
+                + CRLF + 'content-type: image/png'
+                + CRLF + CRLF
+            });
+
+            Wreck.request('POST','http://127.0.0.1:' + port, {
+                payload: form,
+                headers: form.getHeaders()
+            }, function (err, res, payload) {});
+        });
+    });
+
     it('parses a blank gif file', function (done) {
 
         var payload =
@@ -862,7 +910,7 @@ describe('Dispenser', function () {
             '--AaB03x\r\n' +
             'content-disposition: form-data; name="file"; filename=""\r\n' +
             '\r\n' +
-            '   \r\n' +
+            '\r\n' +
             '--AaB03x--\r\n';
 
         simulate(payload, 'AaB03x', function (err, data) {
@@ -870,7 +918,35 @@ describe('Dispenser', function () {
             expect(err).to.not.exist;
             expect(data).to.deep.equal({
                 file: {
-                    value: "   "
+                    value: ""
+                }
+            });
+            done();
+        });
+    });
+
+    it('parses a file without a filename', function (done) {
+
+        var payload =
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="file"\r\n' +
+            'content-transfer-encoding: base64\r\n' +
+            'Content-Type: image/gif\r\n' +
+            '\r\n' +
+            B64.encode(new Buffer(internals.blankgif)) + '\r\n' +
+            '--AaB03x--\r\n';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.not.exist;
+            expect(data).to.deep.equal({
+                file: {
+                    value: internals.blankgif,
+                    headers: {
+                        'content-disposition': 'form-data; name="file"; filename="blank.gif"',
+                        'content-transfer-encoding': 'base64',
+                        'content-type': 'image/gif'
+                    }
                 }
             });
             done();
@@ -914,6 +990,82 @@ describe('Dispenser', function () {
                 header: '--' + form.getBoundary() + CRLF + 'content-disposition: form-data; name="file"; filename="'
                 + filename + '"'
                 + CRLF + 'content-type: text/plain'
+                + CRLF + CRLF
+            });
+
+            Wreck.request('POST','http://127.0.0.1:' + port, {
+                payload: form,
+                headers: form.getHeaders()
+            }, function (err, res, payload) {});
+        });
+    });
+
+    it('parses a mp4 file', function (done) {
+
+        var payload =
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="file"; filename="video.mp4"\r\n' +
+            'content-transfer-encoding: base64\r\n' +
+            'Content-Type: video/mp4\r\n' +
+            '\r\n' +
+            B64.encode(new Buffer(internals.video)) + '\r\n' +
+            '--AaB03x--\r\n';
+
+        simulate(payload, 'AaB03x', function (err, data) {
+
+            expect(err).to.not.exist;
+            expect(data).to.deep.equal({
+                file: {
+                    filename: 'video.mp4',
+                    value: internals.video,
+                    headers: {
+                        'content-disposition': 'form-data; name="file"; filename="video.mp4"',
+                        'content-transfer-encoding': 'base64',
+                        'content-type': 'video/mp4'
+                    }
+                }
+            });
+            done();
+        });
+    });
+
+    it('parses an uploaded mp4 file', function (done) {
+
+        var port = 0;
+        var server = Http.createServer(function (req, res) {
+
+            var contentType = Pez.contentType(req.headers['content-type']);
+            var dispenser = internals.interceptor(contentType.boundary, 'base64', function (err, result) {
+
+                expect(err).to.not.exist;
+                expect(result).to.deep.equal({
+                    file: {
+                        filename: 'video.mp4',
+                        headers: {
+                            'content-disposition': 'form-data; name="file"; filename="video.mp4"',
+                            'content-transfer-encoding': 'base64',
+                            'content-type': 'video/mp4'
+                        },
+                        value: internals.video
+                    }
+                });
+                done();
+            });
+
+            req.pipe(dispenser);
+        }).listen(port, '127.0.0.1');
+
+        server.once('listening', function () {
+
+            port = server.address().port;
+
+            var CRLF = '\r\n';
+            var form = new FormData();
+
+            form.append('file', internals.video, {
+                header: '--' + form.getBoundary() + CRLF + 'content-disposition: form-data; name="file"; filename="video.mp4"'
+                + CRLF + 'content-transfer-encoding:base64'
+                + CRLF + 'content-type: video/mp4'
                 + CRLF + CRLF
             });
 
