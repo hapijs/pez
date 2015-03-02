@@ -4,6 +4,7 @@ var Events = require('events');
 var Http = require('http');
 var Stream = require('stream');
 var B64 = require('b64');
+var Code = require('code');
 var Content = require('content');
 var FormData = require('form-data');
 var Fs = require('fs');
@@ -24,7 +25,7 @@ var internals = {};
 var lab = exports.lab = Lab.script();
 var describe = lab.describe;
 var it = lab.it;
-var expect = Lab.expect;
+var expect = Code.expect;
 
 
 describe('Dispenser', function () {
