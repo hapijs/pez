@@ -34,7 +34,7 @@ describe('Dispenser', function () {
 
         if (arguments.length === 3) {
             callback = contentType;
-            contentType = 'multipart/form-data; boundary="' + boundary + '"'
+            contentType = 'multipart/form-data; boundary="' + boundary + '"';
         }
 
         var req = new internals.Payload(payload);
@@ -63,7 +63,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 preamble: {
                     value: 'pre\r\nemble'
@@ -113,7 +113,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 preamble: {
                     value: 'pre\r\nemble'
@@ -151,7 +151,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 field1: {
                     value: 'one\r\ntwo'
@@ -181,7 +181,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 field: {
                     value: 'value'
@@ -203,7 +203,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 field: {
                     value: 'value'
@@ -225,7 +225,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 field: {
                     value: 'value'
@@ -248,7 +248,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 field: {
                     value: 'this is the content of the file',
@@ -275,7 +275,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.exist;
+            expect(err).to.exist();
             expect(err.message).to.equal('Invalid header continuation without valid declaration on previous line');
 
             done();
@@ -293,7 +293,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.exist;
+            expect(err).to.exist();
             expect(err.message).to.equal('Missing end boundary');
 
             done();
@@ -311,7 +311,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.exist;
+            expect(err).to.exist();
             expect(err.message).to.equal('Preamble missing CRLF terminator');
 
             done();
@@ -329,7 +329,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.exist;
+            expect(err).to.exist();
             expect(err.message).to.equal('Preamble missing CRLF terminator');
 
             done();
@@ -346,7 +346,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.exist;
+            expect(err).to.exist();
             expect(err.message).to.equal('Incomplete multipart payload');
 
             done();
@@ -365,7 +365,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.exist;
+            expect(err).to.exist();
             expect(err.message).to.equal('Invalid header missing field name');
 
             done();
@@ -384,7 +384,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.exist;
+            expect(err).to.exist();
             expect(err.message).to.equal('Invalid header missing colon separator');
 
             done();
@@ -401,7 +401,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.exist;
+            expect(err).to.exist();
             expect(err.message).to.equal('Missing content-disposition header');
 
             done();
@@ -423,7 +423,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.exist;
+            expect(err).to.exist();
             expect(err.message).to.equal('Only white space allowed after boundary');
 
             done();
@@ -441,7 +441,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.exist;
+            expect(err).to.exist();
             expect(err.message).to.equal('Only white space allowed after boundary at end');
 
             done();
@@ -457,7 +457,7 @@ describe('Dispenser', function () {
 
         dispenser.once('error', function (err) {
 
-            expect(err).to.exist;
+            expect(err).to.exist();
             expect(err.message).to.equal('Client request aborted');
             done();
         });
@@ -530,7 +530,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 file: {
                     filename: 'file1.txt',
@@ -554,7 +554,7 @@ describe('Dispenser', function () {
             var contentType = Content.type(req.headers['content-type']);
             var dispenser = internals.interceptor(contentType.boundary, function (err, result) {
 
-                expect(err).to.not.exist;
+                expect(err).to.not.exist();
                 expect(result).to.deep.equal({
                     file1: {
                         filename: 'file1.txt',
@@ -597,7 +597,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB=03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 file: {
                     filename: 'file1.txt',
@@ -627,7 +627,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', contentType, function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 file: {
                     filename: 'file1.txt',
@@ -658,7 +658,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 sticker: {
                     value: png.toString(),
@@ -681,7 +681,7 @@ describe('Dispenser', function () {
             var contentType = Content.type(req.headers['content-type']);
             var dispenser = internals.interceptor(contentType.boundary, function (err, result) {
 
-                expect(err).to.not.exist;
+                expect(err).to.not.exist();
 
                 expect(result).to.deep.equal({
                     sticker: {
@@ -714,7 +714,7 @@ describe('Dispenser', function () {
             var contentType = Content.type(req.headers['content-type']);
             var dispenser = internals.interceptor(contentType.boundary, function (err, result) {
 
-                expect(err).to.not.exist;
+                expect(err).to.not.exist();
                 expect(result).to.deep.equal({
                     sticker: {
                         value: Fs.readFileSync('./test/files/large.png').toString(),
@@ -754,7 +754,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 file: {
                     filename: 'blank.gif',
@@ -777,7 +777,7 @@ describe('Dispenser', function () {
             var contentType = Content.type(req.headers['content-type']);
             var dispenser = internals.interceptor(contentType.boundary, function (err, result) {
 
-                expect(err).to.not.exist;
+                expect(err).to.not.exist();
                 expect(result).to.deep.equal({
                     file: {
                         value: Fs.readFileSync('./test/files/blank.gif').toString(),
@@ -813,7 +813,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 file: {
                     value: '',
@@ -841,7 +841,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 file: {
                     value: blankgif.toString(),
@@ -872,7 +872,7 @@ describe('Dispenser', function () {
 
         simulate(payload, 'AaB03x', function (err, data) {
 
-            expect(err).to.not.exist;
+            expect(err).to.not.exist();
             expect(data).to.deep.equal({
                 file: {
                     value: blankgif.toString(),

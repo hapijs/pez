@@ -3,7 +3,7 @@
   "description": "Multipart parser",
   "version": "1.0.0",
   "repository": "git://github.com/hapijs/pez",
-  "main": "index",
+  "main": "lib/index.js",
   "keywords": [
     "HTTP",
     "multipart",
@@ -27,12 +27,8 @@
     "wreck": "5.x.x"
   },
   "scripts": {
-    "test": "make test-cov"
+    "test": "lab -t 100 -v -L -a code",
+    "test-cov-html": "lab -a code -r html -o coverage.html"
   },
-  "licenses": [
-    {
-      "type": "BSD",
-      "url": "http://github.com/hapijs/pez/raw/master/LICENSE"
-    }
-  ]
+  "license": "BSD-3-Clause"
 }
