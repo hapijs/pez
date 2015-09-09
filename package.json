@@ -10,7 +10,7 @@
     "parser"
   ],
   "engines": {
-    "node": ">=0.10.32"
+    "node": ">=0.10.40"
   },
   "dependencies": {
     "b64": "2.x.x",
