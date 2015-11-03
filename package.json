@@ -1,7 +1,7 @@
 {
   "name": "pez",
   "description": "Multipart parser",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "repository": "git://github.com/hapijs/pez",
   "main": "lib/index.js",
   "keywords": [
@@ -13,18 +13,18 @@
     "node": ">=4.0.0"
   },
   "dependencies": {
-    "b64": "2.x.x",
-    "boom": "2.x.x",
-    "content": "1.x.x",
+    "b64": "3.x.x",
+    "boom": "3.x.x",
+    "content": "3.x.x",
     "hoek": "3.x.x",
-    "nigel": "1.x.x"
+    "nigel": "2.x.x"
   },
   "devDependencies": {
     "code": "2.x.x",
     "form-data": "0.2.x",
     "lab": "7.x.x",
-    "shot": "1.x.x",
-    "wreck": "6.x.x"
+    "shot": "2.x.x",
+    "wreck": "7.x.x"
   },
   "scripts": {
     "test": "lab -t 100 -v -L -a code",

@@ -928,7 +928,7 @@ Hoek.inherits(internals.Recorder, Stream.Writable);
 
 internals.Recorder.prototype._write = function (chunk, encoding, next) {
 
-    this.length += chunk.length;
+    this.length = this.length + chunk.length;
     this.buffers.push(chunk);
     this.nexts.push(next);
     this.emit('ping');
