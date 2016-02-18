@@ -507,6 +507,7 @@ describe('Dispenser', () => {
 
         dispenser.once('error', (err) => {
 
+            expect(err instanceof Error).to.equal(true);
             done();
         });
 
@@ -579,7 +580,10 @@ describe('Dispenser', () => {
 
             Wreck.post('http://127.0.0.1:' + port, {
                 payload: form, headers: form.getHeaders()
-            }, (err, res, payload) => {});
+            }, (err, res, payload) => {
+
+                expect(err).to.not.exist();
+            });
         });
     });
 
@@ -992,6 +996,7 @@ internals.interceptor = function (boundary, callback) {
 
         Wreck.read(part, {}, (err, payload) => {
 
+            expect(err).to.not.exist();
             set(part.name, payload.toString(), part.headers, part.filename);
         });
     });
