@@ -44,6 +44,24 @@ describe('Dispenser', () => {
         req.pipe(dispenser);
     };
 
+    it('throws on invalid options', (done) => {
+
+        const fail = (options) => {
+
+            expect(() => {
+
+                return new Pez.Dispenser(options);
+            }).to.throw(Error, 'options must be an object');
+        };
+
+        fail();
+        fail(null);
+        fail('foo');
+        fail(1);
+        fail(false);
+        done();
+    });
+
     it('parses RFC1867 payload', (done) => {
 
         const payload =
@@ -585,6 +603,31 @@ describe('Dispenser', () => {
                 expect(err).to.not.exist();
             });
         });
+    });
+
+    it('errors if the payload size exceeds the byte limit', (done) => {
+
+        const payload =
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="file"; filename="file1.txt"\r\n' +
+            'Content-Type: text/plain\r\n' +
+            '\r\n' +
+            'I am a plain text file\r\n' +
+            '--AaB03x--\r\n';
+
+        const req = new internals.Payload(payload, true);
+        req.headers = { 'content-type': 'multipart/form-data; boundary="AaB03x"' };
+
+        const dispenser = new Pez.Dispenser({ boundary: 'AaB03x', maxBytes: payload.length - 1 });
+
+        dispenser.once('error', (err) => {
+
+            expect(err).to.exist();
+            expect(err.message).to.equal('Maximum size exceeded');
+            done();
+        });
+
+        req.pipe(dispenser);
     });
 
     it('parses a request with "=" in the boundary', (done) => {
