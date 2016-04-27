@@ -16,7 +16,7 @@
     "b64": "3.x.x",
     "boom": "3.x.x",
     "content": "3.x.x",
-    "hoek": "3.x.x",
+    "hoek": "4.x.x",
     "nigel": "2.x.x"
   },
   "devDependencies": {
