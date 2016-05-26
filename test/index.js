@@ -82,7 +82,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 preamble: {
                     value: 'pre\r\nemble'
                 },
@@ -132,7 +132,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 preamble: {
                     value: 'pre\r\nemble'
                 },
@@ -170,7 +170,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 field1: {
                     value: 'one\r\ntwo'
                 },
@@ -200,7 +200,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 field: {
                     value: 'value'
                 }
@@ -222,7 +222,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 field: {
                     value: 'value'
                 }
@@ -244,7 +244,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 field: {
                     value: 'value'
                 }
@@ -267,7 +267,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 field: {
                     value: 'this is the content of the file',
                     headers: {
@@ -550,7 +550,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 file: {
                     filename: 'file1.txt',
                     value: 'I am a plain text file',
@@ -574,7 +574,7 @@ describe('Dispenser', () => {
             const dispenser = internals.interceptor(contentType.boundary, (err, result) => {
 
                 expect(err).to.not.exist();
-                expect(result).to.deep.equal({
+                expect(result).to.equal({
                     file1: {
                         filename: 'file1.txt',
                         headers: {
@@ -644,7 +644,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB=03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 file: {
                     filename: 'file1.txt',
                     value: 'I am a plain text file',
@@ -674,7 +674,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', contentType, (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 file: {
                     filename: 'file1.txt',
                     value: 'I am a plain text file',
@@ -705,7 +705,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 sticker: {
                     value: png.toString(),
                     headers: {
@@ -729,7 +729,7 @@ describe('Dispenser', () => {
 
                 expect(err).to.not.exist();
 
-                expect(result).to.deep.equal({
+                expect(result).to.equal({
                     sticker: {
                         value: Fs.readFileSync('./test/files/image.png').toString(),
                         headers: {
@@ -761,7 +761,7 @@ describe('Dispenser', () => {
             const dispenser = internals.interceptor(contentType.boundary, (err, result) => {
 
                 expect(err).to.not.exist();
-                expect(result).to.deep.equal({
+                expect(result).to.equal({
                     sticker: {
                         value: Fs.readFileSync('./test/files/large.png').toString(),
                         headers: {
@@ -801,7 +801,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 file: {
                     filename: 'blank.gif',
                     value: blankgif.toString(),
@@ -824,7 +824,7 @@ describe('Dispenser', () => {
             const dispenser = internals.interceptor(contentType.boundary, (err, result) => {
 
                 expect(err).to.not.exist();
-                expect(result).to.deep.equal({
+                expect(result).to.equal({
                     file: {
                         value: Fs.readFileSync('./test/files/blank.gif').toString(),
                         headers: {
@@ -860,7 +860,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 file: {
                     value: '',
                     headers: {
@@ -888,7 +888,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 file: {
                     value: blankgif.toString(),
                     headers: {
@@ -919,7 +919,7 @@ describe('Dispenser', () => {
         simulate(payload, 'AaB03x', (err, data) => {
 
             expect(err).to.not.exist();
-            expect(data).to.deep.equal({
+            expect(data).to.equal({
                 file: {
                     value: blankgif.toString(),
                     headers: {

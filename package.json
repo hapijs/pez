@@ -20,7 +20,7 @@
     "nigel": "2.x.x"
   },
   "devDependencies": {
-    "code": "2.x.x",
+    "code": "3.x.x",
     "form-data": "0.2.x",
     "lab": "10.x.x",
     "shot": "3.x.x",
