@@ -927,7 +927,7 @@ describe('Dispenser', () => {
                         'content-transfer-encoding': 'base64',
                         'content-type': 'image/gif'
                     },
-                    filename: filename
+                    filename
                 }
             });
             done();
@@ -1000,11 +1000,11 @@ internals.Recorder.prototype.next = () => {
 
 internals.interceptor = function (boundary, callback) {
 
-    const dispenser = new Pez.Dispenser({ boundary: boundary });
+    const dispenser = new Pez.Dispenser({ boundary });
     const data = {};
     const set = function (name, value, headers, filename) {
 
-        const item = { value: value };
+        const item = { value };
 
         if (headers) {
             item.headers = headers;
