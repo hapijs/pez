@@ -5,7 +5,6 @@
 const Http = require('http');
 const Stream = require('stream');
 const B64 = require('b64');
-const Code = require('code');
 const Content = require('content');
 const FormData = require('form-data');
 const Fs = require('fs');
@@ -25,7 +24,7 @@ const internals = {};
 const lab = exports.lab = Lab.script();
 const describe = lab.describe;
 const it = lab.it;
-const expect = Code.expect;
+const expect = Lab.expect;
 
 
 describe('Dispenser', () => {
