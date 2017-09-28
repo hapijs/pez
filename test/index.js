@@ -4,13 +4,16 @@
 
 const Http = require('http');
 const Stream = require('stream');
+
 const B64 = require('b64');
+const Code = require('code');
 const Content = require('content');
 const FormData = require('form-data');
 const Fs = require('fs');
 const Hoek = require('hoek');
 const Lab = require('lab');
 const Pez = require('..');
+const Teamwork = require('teamwork');
 const Wreck = require('wreck');
 
 
@@ -21,29 +24,21 @@ const internals = {};
 
 // Test shortcuts
 
-const lab = exports.lab = Lab.script();
-const describe = lab.describe;
-const it = lab.it;
-const expect = Lab.expect;
+const { describe, it } = exports.lab = Lab.script();
+const expect = Code.expect;
 
 
 describe('Dispenser', () => {
 
-    const simulate = function (payload, boundary, contentType, callback) {
+    const simulate = function (payload, boundary, contentType) {
 
-        if (arguments.length === 3) {
-            callback = contentType;
-            contentType = 'multipart/form-data; boundary="' + boundary + '"';
-        }
-
+        contentType = contentType || 'multipart/form-data; boundary="' + boundary + '"';
         const req = new internals.Payload(payload);
         req.headers = { 'content-type': contentType };
-
-        const dispenser = internals.interceptor(boundary, callback);
-        req.pipe(dispenser);
+        return internals.interceptor(req, boundary);
     };
 
-    it('throws on invalid options', (done) => {
+    it('throws on invalid options', async () => {
 
         const fail = (options) => {
 
@@ -58,10 +53,9 @@ describe('Dispenser', () => {
         fail('foo');
         fail(1);
         fail(false);
-        done();
     });
 
-    it('parses RFC1867 payload', (done) => {
+    it('parses RFC1867 payload', async () => {
 
         const payload =
             'pre\r\nemble\r\n' +
@@ -78,35 +72,30 @@ describe('Dispenser', () => {
             '--AaB03x--\r\n' +
             'epi\r\nlogue';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                preamble: {
-                    value: 'pre\r\nemble'
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            preamble: {
+                value: 'pre\r\nemble'
+            },
+            field1: {
+                value: 'one\r\ntwo'
+            },
+            epilogue: {
+                value: 'epi\r\nlogue'
+            },
+            pics: {
+                value: 'some content\r\nwith \rnewline\r',
+                headers: {
+                    'content-disposition': 'form-data; name=\"pics\"; filename=\"file1.txt\"',
+                    'content-transfer-encoding': '7bit',
+                    'content-type': 'text/plain'
                 },
-                field1: {
-                    value: 'one\r\ntwo'
-                },
-                epilogue: {
-                    value: 'epi\r\nlogue'
-                },
-                pics: {
-                    value: 'some content\r\nwith \rnewline\r',
-                    headers: {
-                        'content-disposition': 'form-data; name=\"pics\"; filename=\"file1.txt\"',
-                        'content-transfer-encoding': '7bit',
-                        'content-type': 'text/plain'
-                    },
-                    filename: 'file1.txt'
-                }
-            });
-
-            done();
+                filename: 'file1.txt'
+            }
         });
     });
 
-    it('parses payload in chunks', (done) => {
+    it('parses payload in chunks', async () => {
 
         const payload = [
             'pre\r\nemble\r\n',
@@ -128,31 +117,26 @@ describe('Dispenser', () => {
             '--AaB03x--'
         ];
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                preamble: {
-                    value: 'pre\r\nemble'
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            preamble: {
+                value: 'pre\r\nemble'
+            },
+            field1: {
+                value: 'one\r\ntwo'
+            },
+            pics: {
+                value: 'aliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxc',
+                headers: {
+                    'content-disposition': 'form-data; name=\"pics\"; filename=\"file.bin\"',
+                    'content-type': 'text/plain'
                 },
-                field1: {
-                    value: 'one\r\ntwo'
-                },
-                pics: {
-                    value: 'aliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxcaliuexrnhfaliuerxnhfaiuerhfxnlaiuerhfxnlaiuerhfxnliaeruhxnfaieruhfnxc',
-                    headers: {
-                        'content-disposition': 'form-data; name=\"pics\"; filename=\"file.bin\"',
-                        'content-type': 'text/plain'
-                    },
-                    filename: 'file.bin'
-                }
-            });
-
-            done();
+                filename: 'file.bin'
+            }
         });
     });
 
-    it('parses payload without trailing crlf', (done) => {
+    it('parses payload without trailing crlf', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -166,28 +150,23 @@ describe('Dispenser', () => {
             'some content\r\r\n' +
             '--AaB03x--';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                field1: {
-                    value: 'one\r\ntwo'
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            field1: {
+                value: 'one\r\ntwo'
+            },
+            pics: {
+                value: 'some content\r',
+                headers: {
+                    'content-disposition': 'form-data; name=\"pics\"; filename=\"file1.txt\"',
+                    'content-type': 'text/plain'
                 },
-                pics: {
-                    value: 'some content\r',
-                    headers: {
-                        'content-disposition': 'form-data; name=\"pics\"; filename=\"file1.txt\"',
-                        'content-type': 'text/plain'
-                    },
-                    filename: 'file1.txt'
-                }
-            });
-
-            done();
+                filename: 'file1.txt'
+            }
         });
     });
 
-    it('ignores whitespace after boundary', (done) => {
+    it('ignores whitespace after boundary', async () => {
 
         const payload =
             '--AaB03x  \r\n' +
@@ -196,20 +175,15 @@ describe('Dispenser', () => {
             'value\r\n' +
             '--AaB03x--';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                field: {
-                    value: 'value'
-                }
-            });
-
-            done();
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            field: {
+                value: 'value'
+            }
         });
     });
 
-    it('parses single part without epilogue', (done) => {
+    it('parses single part without epilogue', async () => {
 
         const payload =
             '--AaB03x  \r\n' +
@@ -218,20 +192,15 @@ describe('Dispenser', () => {
             'value\r\n' +
             '--AaB03x--\r\n';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                field: {
-                    value: 'value'
-                }
-            });
-
-            done();
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            field: {
+                value: 'value'
+            }
         });
     });
 
-    it('reads header over multiple lines', (done) => {
+    it('reads header over multiple lines', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -240,20 +209,15 @@ describe('Dispenser', () => {
             'value\r\n' +
             '--AaB03x--';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                field: {
-                    value: 'value'
-                }
-            });
-
-            done();
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            field: {
+                value: 'value'
+            }
         });
     });
 
-    it('parses b64 file', (done) => {
+    it('parses b64 file', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -263,25 +227,20 @@ describe('Dispenser', () => {
             B64.encode(new Buffer('this is the content of the file')) + '\r\n' +
             '--AaB03x--';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                field: {
-                    value: 'this is the content of the file',
-                    headers: {
-                        'content-disposition': 'form-data; name="field"; filename="file.txt"',
-                        'content-transfer-encoding': 'base64'
-                    },
-                    filename: 'file.txt'
-                }
-            });
-
-            done();
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            field: {
+                value: 'this is the content of the file',
+                headers: {
+                    'content-disposition': 'form-data; name="field"; filename="file.txt"',
+                    'content-transfer-encoding': 'base64'
+                },
+                filename: 'file.txt'
+            }
         });
     });
 
-    it('errors on partial header over multiple lines', (done) => {
+    it('errors on partial header over multiple lines', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -290,16 +249,10 @@ describe('Dispenser', () => {
             'value\r\n' +
             '--AaB03x--';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.exist();
-            expect(err.message).to.equal('Invalid header continuation without valid declaration on previous line');
-
-            done();
-        });
+        await expect(simulate(payload, 'AaB03x')).to.reject('Invalid header continuation without valid declaration on previous line');
     });
 
-    it('errors on missing terminator', (done) => {
+    it('errors on missing terminator', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -308,16 +261,10 @@ describe('Dispenser', () => {
             'value\r\n' +
             '--AaB03x';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.exist();
-            expect(err.message).to.equal('Missing end boundary');
-
-            done();
-        });
+        await expect(simulate(payload, 'AaB03x')).to.reject('Missing end boundary');
     });
 
-    it('errors on missing preamble terminator (\\n)', (done) => {
+    it('errors on missing preamble terminator (\\n)', async () => {
 
         const payload =
             'preamble--AaB03x\r\n' +
@@ -326,16 +273,10 @@ describe('Dispenser', () => {
             'value\r\n' +
             '--AaB03x--';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.exist();
-            expect(err.message).to.equal('Preamble missing CRLF terminator');
-
-            done();
-        });
+        await expect(simulate(payload, 'AaB03x')).to.reject('Preamble missing CRLF terminator');
     });
 
-    it('errors on missing preamble terminator (\\r)', (done) => {
+    it('errors on missing preamble terminator (\\r)', async () => {
 
         const payload =
             'preamble\n--AaB03x\r\n' +
@@ -344,16 +285,10 @@ describe('Dispenser', () => {
             'value\r\n' +
             '--AaB03x--';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.exist();
-            expect(err.message).to.equal('Preamble missing CRLF terminator');
-
-            done();
-        });
+        await expect(simulate(payload, 'AaB03x')).to.reject('Preamble missing CRLF terminator');
     });
 
-    it('errors on incomplete part', (done) => {
+    it('errors on incomplete part', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -361,16 +296,10 @@ describe('Dispenser', () => {
             '\r\n' +
             'value\r\n';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.exist();
-            expect(err.message).to.equal('Incomplete multipart payload');
-
-            done();
-        });
+        await expect(simulate(payload, 'AaB03x')).to.reject('Incomplete multipart payload');
     });
 
-    it('errors on invalid part header (missing field name)', (done) => {
+    it('errors on invalid part header (missing field name)', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -380,16 +309,10 @@ describe('Dispenser', () => {
             'content\r\n' +
             '--AaB03x--';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.exist();
-            expect(err.message).to.equal('Invalid header missing field name');
-
-            done();
-        });
+        await expect(simulate(payload, 'AaB03x')).to.reject('Invalid header missing field name');
     });
 
-    it('errors on invalid part header (missing colon)', (done) => {
+    it('errors on invalid part header (missing colon)', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -399,16 +322,10 @@ describe('Dispenser', () => {
             'content\r\n' +
             '--AaB03x--';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.exist();
-            expect(err.message).to.equal('Invalid header missing colon separator');
-
-            done();
-        });
+        await expect(simulate(payload, 'AaB03x')).to.reject('Invalid header missing colon separator');
     });
 
-    it('errors on missing content-disposition', (done) => {
+    it('errors on missing content-disposition', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -416,16 +333,10 @@ describe('Dispenser', () => {
             'content\r\n' +
             '--AaB03x--';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.exist();
-            expect(err.message).to.equal('Missing content-disposition header');
-
-            done();
-        });
+        await expect(simulate(payload, 'AaB03x')).to.reject('Missing content-disposition header');
     });
 
-    it('errors on invalid text after boundary', (done) => {
+    it('errors on invalid text after boundary', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -438,16 +349,10 @@ describe('Dispenser', () => {
             'content\r\n' +
             '--AaB03x--\r\n';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.exist();
-            expect(err.message).to.equal('Only white space allowed after boundary');
-
-            done();
-        });
+        await expect(simulate(payload, 'AaB03x')).to.reject('Only white space allowed after boundary');
     });
 
-    it('errors on invalid text after boundary at end', (done) => {
+    it('errors on invalid text after boundary at end', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -456,42 +361,39 @@ describe('Dispenser', () => {
             'content\r\n' +
             '--AaB03xc';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.exist();
-            expect(err.message).to.equal('Only white space allowed after boundary at end');
-
-            done();
-        });
+        await expect(simulate(payload, 'AaB03x')).to.reject('Only white space allowed after boundary at end');
     });
 
-    it('errors on aborted request', (done) => {
+    it('errors on aborted request', async () => {
 
         const req = new internals.Payload('--AaB03x\r\n', true);
         req.headers = { 'content-type': 'multipart/form-data; boundary="AaB03x"' };
 
         const dispenser = new Pez.Dispenser({ boundary: 'AaB03x' });
 
+        const team = new Teamwork.Team({ meetings: 1 });
         dispenser.once('error', (err) => {
 
             expect(err).to.exist();
             expect(err.message).to.equal('Client request aborted');
-            done();
+            team.attend();
         });
 
         req.pipe(dispenser);
         req.emit('aborted');
+        await team.work;
     });
 
-    it('parses direct write', (done) => {
+    it('parses direct write', async () => {
 
         const dispenser = new Pez.Dispenser({ boundary: 'AaB03x' });
 
+        const team = new Teamwork.Team({ meetings: 1 });
         dispenser.on('field', (name, value) => {
 
             expect(name).to.equal('field1');
             expect(value).to.equal('value');
-            done();
+            team.attend();
         });
 
         dispenser.write('--AaB03x\r\n' +
@@ -501,9 +403,10 @@ describe('Dispenser', () => {
             '--AaB03x--');
 
         dispenser.end();
+        await team.work;
     });
 
-    it('ignores write after error', (done) => {
+    it('ignores write after error', async () => {
 
         const dispenser = new Pez.Dispenser({ boundary: 'AaB03x' });
 
@@ -522,10 +425,11 @@ describe('Dispenser', () => {
                 '--AaB03x*');
         });
 
+        const team = new Teamwork.Team({ meetings: 1 });
         dispenser.once('error', (err) => {
 
             expect(err instanceof Error).to.equal(true);
-            done();
+            team.attend();
         });
 
         dispenser.write('--AaB03x\r\n' +
@@ -533,9 +437,11 @@ describe('Dispenser', () => {
             '\r\n' +
             'value\r\n' +
             '--AaB03x*');
+
+        await team.work;
     });
 
-    it('parses a standard text file', (done) => {
+    it('parses a standard text file', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -546,46 +452,39 @@ describe('Dispenser', () => {
             'I am a plain text file\r\n' +
             '--AaB03x--\r\n';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                file: {
-                    filename: 'file1.txt',
-                    value: 'I am a plain text file',
-                    headers: {
-                        'content-disposition': 'form-data; name="file"; filename="file1.txt"',
-                        'content-transfer-encoding': '7bit',
-                        'content-type': 'text/plain'
-                    }
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            file: {
+                filename: 'file1.txt',
+                value: 'I am a plain text file',
+                headers: {
+                    'content-disposition': 'form-data; name="file"; filename="file1.txt"',
+                    'content-transfer-encoding': '7bit',
+                    'content-type': 'text/plain'
                 }
-            });
-            done();
+            }
         });
     });
 
-    it('parses an uploaded standard text file', (done) => {
+    it('parses an uploaded standard text file', async () => {
 
         let port = 0;
-        const server = Http.createServer((req, res) => {
+        const team = new Teamwork.Team({ meetings: 1 });
+        const server = Http.createServer(async (req, res) => {
 
             const contentType = Content.type(req.headers['content-type']);
-            const dispenser = internals.interceptor(contentType.boundary, (err, result) => {
-
-                expect(err).to.not.exist();
-                expect(result).to.equal({
-                    file1: {
-                        filename: 'file1.txt',
-                        headers: {
-                            'content-disposition': 'form-data; name="file1"; filename="file1.txt"',
-                            'content-type': 'text/plain'
-                        },
-                        value: 'I am a plain text file'
-                    }
-                });
-                done();
+            const result = await internals.interceptor(req, contentType.boundary);
+            expect(result).to.equal({
+                file1: {
+                    filename: 'file1.txt',
+                    headers: {
+                        'content-disposition': 'form-data; name="file1"; filename="file1.txt"',
+                        'content-type': 'text/plain'
+                    },
+                    value: 'I am a plain text file'
+                }
             });
-            req.pipe(dispenser);
+            team.attend();
         }).listen(port, '127.0.0.1');
 
         server.once('listening', () => {
@@ -602,9 +501,11 @@ describe('Dispenser', () => {
                 expect(err).to.not.exist();
             });
         });
+
+        await team.work;
     });
 
-    it('errors if the payload size exceeds the byte limit', (done) => {
+    it('errors if the payload size exceeds the byte limit', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -619,17 +520,19 @@ describe('Dispenser', () => {
 
         const dispenser = new Pez.Dispenser({ boundary: 'AaB03x', maxBytes: payload.length - 1 });
 
+        const team = new Teamwork.Team({ meetings: 1 });
         dispenser.once('error', (err) => {
 
             expect(err).to.exist();
             expect(err.message).to.equal('Maximum size exceeded');
-            done();
+            team.attend();
         });
 
         req.pipe(dispenser);
+        await team.work;
     });
 
-    it('parses a request with "=" in the boundary', (done) => {
+    it('parses a request with "=" in the boundary', async () => {
 
         const payload =
             '--AaB=03x\r\n' +
@@ -640,25 +543,21 @@ describe('Dispenser', () => {
             'I am a plain text file\r\n' +
             '--AaB=03x--\r\n';
 
-        simulate(payload, 'AaB=03x', (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                file: {
-                    filename: 'file1.txt',
-                    value: 'I am a plain text file',
-                    headers: {
-                        'content-disposition': 'form-data; name="file"; filename="file1.txt"',
-                        'content-transfer-encoding': '7bit',
-                        'content-type': 'text/plain'
-                    }
+        const data = await simulate(payload, 'AaB=03x');
+        expect(data).to.equal({
+            file: {
+                filename: 'file1.txt',
+                value: 'I am a plain text file',
+                headers: {
+                    'content-disposition': 'form-data; name="file"; filename="file1.txt"',
+                    'content-transfer-encoding': '7bit',
+                    'content-type': 'text/plain'
                 }
-            });
-            done();
+            }
         });
     });
 
-    it('parses a request with non-standard contentType', (done) => {
+    it('parses a request with non-standard contentType', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -670,25 +569,21 @@ describe('Dispenser', () => {
             '--AaB03x--\r\n';
         const contentType = 'multipart/form-data; boundary="--AaB03x"; charset=utf-8; random=foobar';
 
-        simulate(payload, 'AaB03x', contentType, (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                file: {
-                    filename: 'file1.txt',
-                    value: 'I am a plain text file',
-                    headers: {
-                        'content-disposition': 'form-data; name="file"; filename="file1.txt"',
-                        'content-transfer-encoding': '7bit',
-                        'content-type': 'text/plain'
-                    }
+        const data = await simulate(payload, 'AaB03x', contentType);
+        expect(data).to.equal({
+            file: {
+                filename: 'file1.txt',
+                value: 'I am a plain text file',
+                headers: {
+                    'content-disposition': 'form-data; name="file"; filename="file1.txt"',
+                    'content-transfer-encoding': '7bit',
+                    'content-type': 'text/plain'
                 }
-            });
-            done();
+            }
         });
     });
 
-    it('parses a png file', (done) => {
+    it('parses a png file', async () => {
 
         const png = Fs.readFileSync('./test/files/image.png');
 
@@ -701,47 +596,38 @@ describe('Dispenser', () => {
             B64.encode(png) + '\r\n' +
             '--AaB03x--\r\n';
 
-        simulate(payload, 'AaB03x', (err, data) => {
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            sticker: {
+                value: png.toString(),
+                headers: {
+                    'content-disposition': 'form-data; name="sticker"; filename="image.png"',
+                    'content-transfer-encoding': 'base64',
+                    'content-type': 'image/png'
+                },
+                filename: 'image.png'
+            }
+        });
+    });
 
-            expect(err).to.not.exist();
-            expect(data).to.equal({
+    it('parses an uploaded png file', async () => {
+
+        const team = new Teamwork.Team({ meetings: 1 });
+        const server = Http.createServer(async (req, res) => {
+
+            const contentType = Content.type(req.headers['content-type']);
+            const result = await internals.interceptor(req, contentType.boundary);
+            expect(result).to.equal({
                 sticker: {
-                    value: png.toString(),
+                    value: Fs.readFileSync('./test/files/image.png').toString(),
                     headers: {
                         'content-disposition': 'form-data; name="sticker"; filename="image.png"',
-                        'content-transfer-encoding': 'base64',
                         'content-type': 'image/png'
                     },
                     filename: 'image.png'
                 }
             });
-            done();
-        });
-    });
-
-    it('parses an uploaded png file', (done) => {
-
-        const server = Http.createServer((req, res) => {
-
-            const contentType = Content.type(req.headers['content-type']);
-            const dispenser = internals.interceptor(contentType.boundary, (err, result) => {
-
-                expect(err).to.not.exist();
-
-                expect(result).to.equal({
-                    sticker: {
-                        value: Fs.readFileSync('./test/files/image.png').toString(),
-                        headers: {
-                            'content-disposition': 'form-data; name="sticker"; filename="image.png"',
-                            'content-type': 'image/png'
-                        },
-                        filename: 'image.png'
-                    }
-                });
-                done();
-            });
-
-            req.pipe(dispenser);
+            team.attend();
         }).listen(0, '127.0.0.1');
 
         server.once('listening', () => {
@@ -750,30 +636,28 @@ describe('Dispenser', () => {
             form.append('sticker', Fs.createReadStream('./test/files/image.png'));
             Wreck.request('POST', 'http://127.0.0.1:' + server.address().port, { payload: form, headers: form.getHeaders() });
         });
+
+        await team.work;
     });
 
-    it('parses a large uploaded png file', (done) => {
+    it('parses a large uploaded png file', async () => {
 
-        const server = Http.createServer((req, res) => {
+        const team = new Teamwork.Team({ meetings: 1 });
+        const server = Http.createServer(async (req, res) => {
 
             const contentType = Content.type(req.headers['content-type']);
-            const dispenser = internals.interceptor(contentType.boundary, (err, result) => {
-
-                expect(err).to.not.exist();
-                expect(result).to.equal({
-                    sticker: {
-                        value: Fs.readFileSync('./test/files/large.png').toString(),
-                        headers: {
-                            'content-disposition': 'form-data; name="sticker"; filename="large.png"',
-                            'content-type': 'image/png'
-                        },
-                        filename: 'large.png'
-                    }
-                });
-                done();
+            const result = await internals.interceptor(req, contentType.boundary);
+            expect(result).to.equal({
+                sticker: {
+                    value: Fs.readFileSync('./test/files/large.png').toString(),
+                    headers: {
+                        'content-disposition': 'form-data; name="sticker"; filename="large.png"',
+                        'content-type': 'image/png'
+                    },
+                    filename: 'large.png'
+                }
             });
-
-            req.pipe(dispenser);
+            team.attend();
         }).listen(0, '127.0.0.1');
 
         server.once('listening', () => {
@@ -782,9 +666,11 @@ describe('Dispenser', () => {
             form.append('sticker', Fs.createReadStream('./test/files/large.png'));
             Wreck.request('POST', 'http://127.0.0.1:' + server.address().port, { payload: form, headers: form.getHeaders() });
         });
+
+        await team.work;
     });
 
-    it('parses a blank gif file', (done) => {
+    it('parses a blank gif file', async () => {
 
         const blankgif = Fs.readFileSync('./test/files/blank.gif');
 
@@ -797,46 +683,38 @@ describe('Dispenser', () => {
             B64.encode(blankgif) + '\r\n' +
             '--AaB03x--\r\n';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                file: {
-                    filename: 'blank.gif',
-                    value: blankgif.toString(),
-                    headers: {
-                        'content-disposition': 'form-data; name="file"; filename="blank.gif"',
-                        'content-transfer-encoding': 'base64',
-                        'content-type': 'image/gif'
-                    }
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            file: {
+                filename: 'blank.gif',
+                value: blankgif.toString(),
+                headers: {
+                    'content-disposition': 'form-data; name="file"; filename="blank.gif"',
+                    'content-transfer-encoding': 'base64',
+                    'content-type': 'image/gif'
                 }
-            });
-            done();
+            }
         });
     });
 
-    it('parses an uploaded blank gif file', (done) => {
+    it('parses an uploaded blank gif file', async () => {
 
-        const server = Http.createServer((req, res) => {
+        const team = new Teamwork.Team({ meetings: 1 });
+        const server = Http.createServer(async (req, res) => {
 
             const contentType = Content.type(req.headers['content-type']);
-            const dispenser = internals.interceptor(contentType.boundary, (err, result) => {
-
-                expect(err).to.not.exist();
-                expect(result).to.equal({
-                    file: {
-                        value: Fs.readFileSync('./test/files/blank.gif').toString(),
-                        headers: {
-                            'content-disposition': 'form-data; name="file"; filename="blank.gif"',
-                            'content-type': 'image/gif'
-                        },
-                        filename: 'blank.gif'
-                    }
-                });
-                done();
+            const result = await internals.interceptor(req, contentType.boundary);
+            expect(result).to.equal({
+                file: {
+                    value: Fs.readFileSync('./test/files/blank.gif').toString(),
+                    headers: {
+                        'content-disposition': 'form-data; name="file"; filename="blank.gif"',
+                        'content-type': 'image/gif'
+                    },
+                    filename: 'blank.gif'
+                }
             });
-
-            req.pipe(dispenser);
+            team.attend();
         }).listen(0, '127.0.0.1');
 
         server.once('listening', () => {
@@ -845,9 +723,11 @@ describe('Dispenser', () => {
             form.append('file', Fs.createReadStream('./test/files/blank.gif'));
             Wreck.request('POST', 'http://127.0.0.1:' + server.address().port, { payload: form, headers: form.getHeaders() });
         });
+
+        await team.work;
     });
 
-    it('parses an empty file without a filename', (done) => {
+    it('parses an empty file without a filename', async () => {
 
         const payload =
             '--AaB03x\r\n' +
@@ -856,22 +736,18 @@ describe('Dispenser', () => {
             '\r\n' +
             '--AaB03x--\r\n';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                file: {
-                    value: '',
-                    headers: {
-                        'content-disposition': 'form-data; name="file"; filename=""'
-                    }
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            file: {
+                value: '',
+                headers: {
+                    'content-disposition': 'form-data; name="file"; filename=""'
                 }
-            });
-            done();
+            }
         });
     });
 
-    it('parses a file without a filename', (done) => {
+    it('parses a file without a filename', async () => {
 
         const blankgif = Fs.readFileSync('./test/files/blank.gif');
 
@@ -884,24 +760,20 @@ describe('Dispenser', () => {
             B64.encode(blankgif) + '\r\n' +
             '--AaB03x--\r\n';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                file: {
-                    value: blankgif.toString(),
-                    headers: {
-                        'content-disposition': 'form-data; name="file"; filename=""',
-                        'content-transfer-encoding': 'base64',
-                        'content-type': 'image/gif'
-                    }
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            file: {
+                value: blankgif.toString(),
+                headers: {
+                    'content-disposition': 'form-data; name="file"; filename=""',
+                    'content-transfer-encoding': 'base64',
+                    'content-type': 'image/gif'
                 }
-            });
-            done();
+            }
         });
     });
 
-    it('handles unusual filename', (done) => {
+    it('handles unusual filename', async () => {
 
         const blankgif = Fs.readFileSync('./test/files/blank.gif');
         const filename = ': \\ ? % * | %22 < > . ? ; \' @ # $ ^ & ( ) - _ = + { } [ ] ` ~.txt';
@@ -915,21 +787,17 @@ describe('Dispenser', () => {
             B64.encode(blankgif) + '\r\n' +
             '--AaB03x--\r\n';
 
-        simulate(payload, 'AaB03x', (err, data) => {
-
-            expect(err).to.not.exist();
-            expect(data).to.equal({
-                file: {
-                    value: blankgif.toString(),
-                    headers: {
-                        'content-disposition': 'form-data; name="file"; filename="' + filename + '"',
-                        'content-transfer-encoding': 'base64',
-                        'content-type': 'image/gif'
-                    },
-                    filename
-                }
-            });
-            done();
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            file: {
+                value: blankgif.toString(),
+                headers: {
+                    'content-disposition': 'form-data; name="file"; filename="' + filename + '"',
+                    'content-transfer-encoding': 'base64',
+                    'content-type': 'image/gif'
+                },
+                filename
+            }
         });
     });
 });
@@ -997,7 +865,8 @@ internals.Recorder.prototype.next = () => {
     this.nexts = [];
 };
 
-internals.interceptor = function (boundary, callback) {
+
+internals.interceptor = function (req, boundary) {
 
     const dispenser = new Pez.Dispenser({ boundary });
     const data = {};
@@ -1034,13 +903,10 @@ internals.interceptor = function (boundary, callback) {
         set('epilogue', value);
     });
 
-    dispenser.on('part', (part) => {
+    dispenser.on('part', async (part) => {
 
-        Wreck.read(part, {}, (err, payload) => {
-
-            expect(err).to.not.exist();
-            set(part.name, payload.toString(), part.headers, part.filename);
-        });
+        const payload = await Wreck.read(part);
+        set(part.name, payload.toString(), part.headers, part.filename);
     });
 
     dispenser.on('field', (name, value) => {
@@ -1048,15 +914,10 @@ internals.interceptor = function (boundary, callback) {
         set(name, value);
     });
 
-    dispenser.once('close', () => {
+    return new Promise((resolve, reject) => {
 
-        callback(null, data);
+        dispenser.once('close', () => resolve(data));
+        dispenser.once('error', reject);
+        req.pipe(dispenser);
     });
-
-    dispenser.once('error', (err) => {
-
-        return callback(err);
-    });
-
-    return dispenser;
 };
