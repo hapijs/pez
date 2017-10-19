@@ -525,6 +525,7 @@ describe('Dispenser', () => {
 
             expect(err).to.exist();
             expect(err.message).to.equal('Maximum size exceeded');
+            expect(err.output.statusCode).to.equal(413);
             team.attend();
         });
 
