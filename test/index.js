@@ -371,7 +371,7 @@ describe('Dispenser', () => {
 
         const dispenser = new Pez.Dispenser({ boundary: 'AaB03x' });
 
-        const team = new Teamwork.Team({ meetings: 1 });
+        const team = new Teamwork();
         dispenser.once('error', (err) => {
 
             expect(err).to.exist();
@@ -388,7 +388,7 @@ describe('Dispenser', () => {
 
         const dispenser = new Pez.Dispenser({ boundary: 'AaB03x' });
 
-        const team = new Teamwork.Team({ meetings: 1 });
+        const team = new Teamwork();
         dispenser.on('field', (name, value) => {
 
             expect(name).to.equal('field1');
@@ -425,7 +425,7 @@ describe('Dispenser', () => {
                 '--AaB03x*');
         });
 
-        const team = new Teamwork.Team({ meetings: 1 });
+        const team = new Teamwork();
         dispenser.once('error', (err) => {
 
             expect(err instanceof Error).to.equal(true);
@@ -469,7 +469,7 @@ describe('Dispenser', () => {
     it('parses an uploaded standard text file', async () => {
 
         let port = 0;
-        const team = new Teamwork.Team({ meetings: 1 });
+        const team = new Teamwork();
         const server = Http.createServer(async (req, res) => {
 
             const contentType = Content.type(req.headers['content-type']);
@@ -520,7 +520,7 @@ describe('Dispenser', () => {
 
         const dispenser = new Pez.Dispenser({ boundary: 'AaB03x', maxBytes: payload.length - 1 });
 
-        const team = new Teamwork.Team({ meetings: 1 });
+        const team = new Teamwork();
         dispenser.once('error', (err) => {
 
             expect(err).to.exist();
@@ -613,7 +613,7 @@ describe('Dispenser', () => {
 
     it('parses an uploaded png file', async () => {
 
-        const team = new Teamwork.Team({ meetings: 1 });
+        const team = new Teamwork();
         const server = Http.createServer(async (req, res) => {
 
             const contentType = Content.type(req.headers['content-type']);
@@ -643,7 +643,7 @@ describe('Dispenser', () => {
 
     it('parses a large uploaded png file', async () => {
 
-        const team = new Teamwork.Team({ meetings: 1 });
+        const team = new Teamwork();
         const server = Http.createServer(async (req, res) => {
 
             const contentType = Content.type(req.headers['content-type']);
@@ -700,7 +700,7 @@ describe('Dispenser', () => {
 
     it('parses an uploaded blank gif file', async () => {
 
-        const team = new Teamwork.Team({ meetings: 1 });
+        const team = new Teamwork();
         const server = Http.createServer(async (req, res) => {
 
             const contentType = Content.type(req.headers['content-type']);
