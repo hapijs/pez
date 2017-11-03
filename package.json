@@ -22,7 +22,7 @@
   "devDependencies": {
     "code": "5.x.x",
     "form-data": "2.x.x",
-    "lab": "14.x.x",
+    "lab": "15.x.x",
     "teamwork": "3.x.x",
     "wreck": "14.x.x"
   },

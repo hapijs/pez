@@ -38,7 +38,7 @@ describe('Dispenser', () => {
         return internals.interceptor(req, boundary);
     };
 
-    it('throws on invalid options', async () => {
+    it('throws on invalid options', () => {
 
         const fail = (options) => {
 
