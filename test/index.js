@@ -224,7 +224,7 @@ describe('Dispenser', () => {
             'content-disposition: form-data; name="field"; filename="file.txt"\r\n' +
             'content-transfer-encoding: base64\r\n' +
             '\r\n' +
-            B64.encode(new Buffer('this is the content of the file')) + '\r\n' +
+            B64.encode(Buffer.from('this is the content of the file')) + '\r\n' +
             '--AaB03x--';
 
         const data = await simulate(payload, 'AaB03x');
@@ -852,7 +852,7 @@ internals.Recorder.prototype._write = function (chunk, encoding, next) {
 
 internals.Recorder.prototype.collect = function () {
 
-    const buffer = (this.buffers.length === 0 ? new Buffer(0) : (this.buffers.length === 1 ? this.buffers[0] : Buffer.concat(this.buffers, this.length)));
+    const buffer = (this.buffers.length === 0 ? Buffer.alloc(0) : (this.buffers.length === 1 ? this.buffers[0] : Buffer.concat(this.buffers, this.length)));
     return buffer;
 };
 
