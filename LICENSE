@@ -1,4 +1,4 @@
-Copyright (c) 2014-2017, Project contributors
+Copyright (c) 2014-2018, Project contributors
 Copyright (c) 2014, Walmart
 Copyright (c) 2011-2013 Felix Geisendörfer, Andrew Kelley
 All rights reserved.
@@ -26,8 +26,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
                                   *   *   *
-
-The complete list of contributors can be found at: https://github.com/hapijs/pez/graphs/contributors
 
 The tests used were initially based on https://github.com/andrewrk/node-multiparty which in turn is based
 on https://github.com/felixge/node-formidable, each with their respective licenses provided at the

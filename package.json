@@ -10,7 +10,7 @@
     "parser"
   ],
   "engines": {
-    "node": ">=8.9.0"
+    "node": ">=8.12.0"
   },
   "dependencies": {
     "b64": "4.x.x",
@@ -27,7 +27,7 @@
     "wreck": "14.x.x"
   },
   "scripts": {
-    "test": "lab -t 100 -v -L",
+    "test": "lab -t 100 -L",
     "test-cov-html": "lab -a code -r html -o coverage.html"
   },
   "license": "BSD-3-Clause"
