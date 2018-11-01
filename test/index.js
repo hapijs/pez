@@ -2,6 +2,7 @@
 
 // Load modules
 
+const Fs = require('fs');
 const Http = require('http');
 const Stream = require('stream');
 
@@ -9,8 +10,6 @@ const B64 = require('b64');
 const Code = require('code');
 const Content = require('content');
 const FormData = require('form-data');
-const Fs = require('fs');
-const Hoek = require('hoek');
 const Lab = require('lab');
 const Pez = require('..');
 const Teamwork = require('teamwork');
@@ -804,66 +803,64 @@ describe('Dispenser', () => {
 });
 
 
-internals.Payload = function (payload, err) {
+internals.Payload = class extends Stream.Readable {
 
-    Stream.Readable.call(this);
+    constructor(payload, err) {
 
-    this._data = [].concat(payload);
-    this._position = 0;
-    this._err = err;
-};
+        super();
 
-Hoek.inherits(internals.Payload, Stream.Readable);
-
-
-internals.Payload.prototype._read = function (size) {
-
-    const chunk = this._data[this._position++];
-
-    if (chunk) {
-        this.push(chunk);
-    }
-    else if (!this._err) {
-        this.push(null);
-    }
-};
-
-
-internals.Recorder = function () {
-
-    Stream.Writable.call(this);
-
-    this.buffers = [];
-    this.nexts = [];
-    this.length = 0;
-};
-
-Hoek.inherits(internals.Recorder, Stream.Writable);
-
-
-internals.Recorder.prototype._write = function (chunk, encoding, next) {
-
-    this.length = this.length + chunk.length;
-    this.buffers.push(chunk);
-    this.nexts.push(next);
-    this.emit('ping');
-};
-
-
-internals.Recorder.prototype.collect = function () {
-
-    const buffer = (this.buffers.length === 0 ? Buffer.alloc(0) : (this.buffers.length === 1 ? this.buffers[0] : Buffer.concat(this.buffers, this.length)));
-    return buffer;
-};
-
-
-internals.Recorder.prototype.next = () => {
-
-    for (let i = 0; i < this.nexts.length; ++i) {
-        this.nexts[i]();
+        this._data = [].concat(payload);
+        this._position = 0;
+        this._err = err;
     }
 
-    this.nexts = [];
+    _read(size) {
+
+        const chunk = this._data[this._position++];
+
+        if (chunk) {
+            this.push(chunk);
+        }
+        else if (!this._err) {
+            this.push(null);
+        }
+    }
+};
+
+
+internals.Recorder = class extends Stream.Writable {
+
+    constructor() {
+
+        super();
+
+        this.buffers = [];
+        this.nexts = [];
+        this.length = 0;
+    }
+
+    _write(chunk, encoding, next) {
+
+        this.length = this.length + chunk.length;
+        this.buffers.push(chunk);
+        this.nexts.push(next);
+        this.emit('ping');
+    }
+
+    collect() {
+
+        const buffer = (this.buffers.length === 0 ? Buffer.alloc(0) : (this.buffers.length === 1 ? this.buffers[0] : Buffer.concat(this.buffers, this.length)));
+        return buffer;
+    }
+
+    next() {
+
+        for (let i = 0; i < this.nexts.length; ++i) {
+            this.nexts[i]();
+        }
+
+        this.nexts = [];
+    }
 };
 
 
