@@ -9,9 +9,6 @@
     "multipart",
     "parser"
   ],
-  "engines": {
-    "node": ">=8.12.0"
-  },
   "dependencies": {
     "b64": "4.x.x",
     "boom": "7.x.x",
