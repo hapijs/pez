@@ -216,6 +216,23 @@ describe('Dispenser', () => {
         });
     });
 
+    it('reads header over multiple lines including tabs', async () => {
+
+        const payload =
+            '--AaB03x\r\n' +
+            'content-disposition:\r\n\tform-data; name="field"\r\n' +
+            '\r\n' +
+            'value\r\n' +
+            '--AaB03x--';
+
+        const data = await simulate(payload, 'AaB03x');
+        expect(data).to.equal({
+            field: {
+                value: 'value'
+            }
+        });
+    });
+
     it('parses b64 file', async () => {
 
         const payload =
