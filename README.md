@@ -1,9 +1,9 @@
-#pez
-
-[![Current Version](https://img.shields.io/npm/v/pez.svg)](https://www.npmjs.org/package/pez)
-[![Build Status via Travis CI](https://travis-ci.org/hapijs/pez.svg?branch=master)](https://travis-ci.org/hapijs/pez)
-![Dependencies](http://img.shields.io/david/hapijs/pez.svg)
+# pez
 
 Multipart parser.
 
-Lead Maintainer - [Colin Ihrig](https://github.com/cjihrig)
+[![Build Status](https://travis-ci.org/hapijs/pez.svg?branch=v2-commercial)](https://travis-ci.org/hapijs/pez)
+
+## License
+
+This version of the package requires a commercial license. You may not use, copy, or distribute it without first acquiring a commercial license from Sideway Inc. Using this software without a license is a violation of US and international law. To obtain a license, please contact [sales@sideway.com](mailto:sales@sideway.com). The open source version of this package can be found [here](https://github.com/hapijs/pez).

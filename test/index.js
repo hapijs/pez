@@ -1,26 +1,21 @@
 'use strict';
 
-// Load modules
-
+const Fs = require('fs');
 const Http = require('http');
 const Stream = require('stream');
-const B64 = require('b64');
+
+const B64 = require('@commercial/b64');
 const Code = require('code');
-const Content = require('content');
+const Content = require('@commercial/content');
 const FormData = require('form-data');
-const Fs = require('fs');
-const Hoek = require('hoek');
+const Hoek = require('@commercial/hoek');
 const Lab = require('lab');
 const Pez = require('..');
-const Wreck = require('wreck');
+const Wreck = require('@commercial/wreck');
 
-
-// Declare internals
 
 const internals = {};
 
-
-// Test shortcuts
 
 const lab = exports.lab = Lab.script();
 const describe = lab.describe;
@@ -261,7 +256,7 @@ describe('Dispenser', () => {
             'content-disposition: form-data; name="field"; filename="file.txt"\r\n' +
             'content-transfer-encoding: base64\r\n' +
             '\r\n' +
-            B64.encode(new Buffer('this is the content of the file')) + '\r\n' +
+            B64.encode(Buffer.from('this is the content of the file')) + '\r\n' +
             '--AaB03x--';
 
         simulate(payload, 'AaB03x', (err, data) => {
@@ -984,7 +979,7 @@ internals.Recorder.prototype._write = function (chunk, encoding, next) {
 
 internals.Recorder.prototype.collect = function () {
 
-    const buffer = (this.buffers.length === 0 ? new Buffer(0) : (this.buffers.length === 1 ? this.buffers[0] : Buffer.concat(this.buffers, this.length)));
+    const buffer = (this.buffers.length === 0 ? Buffer.alloc(0) : (this.buffers.length === 1 ? this.buffers[0] : Buffer.concat(this.buffers, this.length)));
     return buffer;
 };
 

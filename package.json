@@ -1,5 +1,5 @@
 {
-  "name": "pez",
+  "name": "@commercial/pez",
   "description": "Multipart parser",
   "version": "2.1.5",
   "repository": "git://github.com/hapijs/pez",
@@ -9,25 +9,22 @@
     "multipart",
     "parser"
   ],
-  "engines": {
-    "node": ">=4.0.0"
-  },
   "dependencies": {
-    "b64": "3.x.x",
-    "boom": "5.x.x",
-    "content": "3.x.x",
-    "hoek": "4.x.x",
-    "nigel": "2.x.x"
+    "@commercial/b64": "3.x.x",
+    "@commercial/boom": "5.x.x",
+    "@commercial/content": "3.x.x",
+    "@commercial/hoek": "4.x.x",
+    "@commercial/nigel": "2.x.x"
   },
   "devDependencies": {
     "code": "4.x.x",
     "form-data": "2.x.x",
-    "lab": "13.x.x",
-    "wreck": "12.x.x"
+    "lab": "14.x.x",
+    "@commercial/wreck": "12.x.x"
   },
   "scripts": {
-    "test": "lab -t 100 -v -L -a code",
-    "test-cov-html": "lab -a code -r html -o coverage.html"
+    "test": "lab -t 100 -L -a code -l",
+    "test-cov-html": "lab -a code -r html -o coverage.html -l"
   },
-  "license": "BSD-3-Clause"
+  "license": "SEE LICENSE IN LICENSE.md"
 }
