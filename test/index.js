@@ -1,27 +1,21 @@
 'use strict';
 
-// Load modules
-
 const Fs = require('fs');
 const Http = require('http');
 const Stream = require('stream');
 
-const B64 = require('b64');
-const Code = require('code');
-const Content = require('content');
+const B64 = require('@hapi/b64');
+const Code = require('@hapi/code');
+const Content = require('@hapi/content');
 const FormData = require('form-data');
-const Lab = require('lab');
+const Lab = require('@hapi/lab');
 const Pez = require('..');
-const Teamwork = require('teamwork');
-const Wreck = require('wreck');
+const Teamwork = require('@hapi/teamwork');
+const Wreck = require('@hapi/wreck');
 
-
-// Declare internals
 
 const internals = {};
 
-
-// Test shortcuts
 
 const { describe, it } = exports.lab = Lab.script();
 const expect = Code.expect;
