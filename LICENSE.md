@@ -1,4 +1,4 @@
-Copyright (c) 2014-2019, Sideway Inc, and project contributors  
+Copyright (c) 2014-2020, Sideway Inc, and project contributors  
 Copyright (c) 2014, Walmart.  
 Copyright (c) 2011-2013 Felix Geisendörfer, Andrew Kelley  
 All rights reserved.

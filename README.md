@@ -2,6 +2,4 @@
 
 # @hapi/pez
 
-[![Build Status](https://travis-ci.org/hapijs/pez.svg?branch=master)](https://travis-ci.org/hapijs/pez)
-
 Multipart parser.
