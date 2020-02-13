@@ -15,7 +15,7 @@
   "dependencies": {
     "@hapi/b64": "5.x.x",
     "@hapi/boom": "9.x.x",
-    "@hapi/content": "5.x.x",
+    "@hapi/content": "^5.0.2",
     "@hapi/hoek": "9.x.x",
     "@hapi/nigel": "4.x.x"
   },
