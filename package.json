@@ -1,7 +1,7 @@
 {
   "name": "@commercial/pez",
   "description": "Multipart parser",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "repository": "git://github.com/hapijs/pez",
   "main": "lib/index.js",
   "keywords": [
