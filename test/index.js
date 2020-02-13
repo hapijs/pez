@@ -928,6 +928,39 @@ describe('Dispenser', () => {
             done();
         });
     });
+
+    it('errors on __proto__ header', (done) => {
+
+        const payload =
+            'pre\r\nemble\r\n' +
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="field1"\r\n' +
+            '__proto__: bad\r\n' +
+            '\r\n' +
+            'one\r\ntwo\r\n' +
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="pics"; filename="file1.txt"\r\n' +
+            'content-transfer-encoding: 7bit\r\n' +
+            'Content-Type: text/plain\r\n' +
+            '\r\n' +
+            'some content\r\nwith \rnewline\r\r\n' +
+            '--AaB03x--\r\n' +
+            'epi\r\nlogue';
+
+        const req = new internals.Payload(payload, true);
+        req.headers = { 'content-type': 'multipart/form-data; boundary="AaB03x"' };
+
+        const dispenser = new Pez.Dispenser({ boundary: 'AaB03x' });
+
+        dispenser.once('error', (err) => {
+
+            expect(err).to.exist();
+            expect(err.message).to.equal('Invalid header');
+            done();
+        });
+
+        req.pipe(dispenser);
+    });
 });
 
 

@@ -12,7 +12,7 @@
   "dependencies": {
     "@commercial/b64": "3.x.x",
     "@commercial/boom": "5.x.x",
-    "@commercial/content": "3.x.x",
+    "@commercial/content": "^3.1.1",
     "@commercial/hoek": "4.x.x",
     "@commercial/nigel": "2.x.x"
   },
