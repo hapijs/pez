@@ -811,6 +811,27 @@ describe('Dispenser', () => {
             }
         });
     });
+
+    it('errors on __proto__ header', async () => {
+
+        const payload =
+            'pre\r\nemble\r\n' +
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="field1"\r\n' +
+            '__proto__: bad\r\n' +
+            '\r\n' +
+            'one\r\ntwo\r\n' +
+            '--AaB03x\r\n' +
+            'content-disposition: form-data; name="pics"; filename="file1.txt"\r\n' +
+            'content-transfer-encoding: 7bit\r\n' +
+            'Content-Type: text/plain\r\n' +
+            '\r\n' +
+            'some content\r\nwith \rnewline\r\r\n' +
+            '--AaB03x--\r\n' +
+            'epi\r\nlogue';
+
+        await expect(simulate(payload, 'AaB03x')).to.reject('Invalid header');
+    });
 });
 
 
