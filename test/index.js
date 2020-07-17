@@ -4,14 +4,14 @@ const Fs = require('fs');
 const Http = require('http');
 const Stream = require('stream');
 
-const B64 = require('@hapi/b64');
+const B64 = require('@commercial/b64');
 const Code = require('@hapi/code');
-const Content = require('@hapi/content');
+const Content = require('@commercial/content');
 const FormData = require('form-data');
 const Lab = require('@hapi/lab');
 const Pez = require('..');
-const Teamwork = require('@hapi/teamwork');
-const Wreck = require('@hapi/wreck');
+const Teamwork = require('@commercial/teamwork');
+const Wreck = require('@commercial/wreck');
 
 
 const internals = {};

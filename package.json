@@ -1,8 +1,11 @@
 {
-  "name": "@hapi/pez",
+  "name": "@commercial/pez",
   "description": "Multipart parser",
   "version": "5.0.2",
   "repository": "git://github.com/hapijs/pez",
+  "engines": {
+    "node": ">=12.0.0"
+  },
   "main": "lib/index.js",
   "files": [
     "lib"
@@ -13,22 +16,22 @@
     "parser"
   ],
   "dependencies": {
-    "@hapi/b64": "5.x.x",
-    "@hapi/boom": "9.x.x",
-    "@hapi/content": "^5.0.2",
-    "@hapi/hoek": "9.x.x",
-    "@hapi/nigel": "4.x.x"
+    "@commercial/b64": "5.x.x",
+    "@commercial/boom": "9.x.x",
+    "@commercial/content": "^5.0.2",
+    "@commercial/hoek": "9.x.x",
+    "@commercial/nigel": "4.x.x"
   },
   "devDependencies": {
     "@hapi/code": "8.x.x",
     "@hapi/lab": "22.x.x",
-    "@hapi/teamwork": "4.x.x",
-    "@hapi/wreck": "17.x.x",
+    "@commercial/teamwork": "5.x.x",
+    "@commercial/wreck": "17.x.x",
     "form-data": "3.x.x"
   },
   "scripts": {
     "test": "lab -t 100 -L -a @hapi/code",
     "test-cov-html": "lab -a @hapi/code -r html -o coverage.html"
   },
-  "license": "BSD-3-Clause"
+  "license": "SEE LICENSE IN LICENSE.md"
 }
