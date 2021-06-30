@@ -22,9 +22,9 @@
   "devDependencies": {
     "@hapi/code": "8.x.x",
     "@hapi/lab": "24.x.x",
-    "@hapi/teamwork": "4.x.x",
+    "@hapi/teamwork": "5.x.x",
     "@hapi/wreck": "17.x.x",
-    "form-data": "3.x.x"
+    "form-data": "4.x.x"
   },
   "scripts": {
     "test": "lab -t 100 -L -a @hapi/code",
