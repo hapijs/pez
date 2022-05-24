@@ -18,18 +18,18 @@
     ]
   },
   "dependencies": {
-    "@hapi/b64": "5.x.x",
-    "@hapi/boom": "9.x.x",
-    "@hapi/content": "^5.0.2",
-    "@hapi/hoek": "9.x.x",
-    "@hapi/nigel": "4.x.x"
+    "@hapi/b64": "^6.0.0",
+    "@hapi/boom": "^10.0.0",
+    "@hapi/content": "^6.0.0",
+    "@hapi/hoek": "^10.0.0",
+    "@hapi/nigel": "^5.0.0"
   },
   "devDependencies": {
-    "@hapi/code": "8.x.x",
+    "@hapi/code": "^9.0.0",
     "@hapi/eslint-plugin": "*",
-    "@hapi/lab": "24.x.x",
-    "@hapi/teamwork": "5.x.x",
-    "@hapi/wreck": "17.x.x",
+    "@hapi/lab": "^25.0.1",
+    "@hapi/teamwork": "^6.0.0",
+    "@hapi/wreck": "^18.0.0",
     "form-data": "4.x.x"
   },
   "scripts": {
