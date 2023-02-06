@@ -543,6 +543,52 @@ describe('Dispenser', () => {
         await team.work;
     });
 
+    it('errors if the payload size exceeds the part limit', async () => {
+
+        const createParts = (n) => {
+
+            return [
+                '--AaB03x\r\n',
+                `content-disposition: form-data; name="field${n}"\r\n`,
+                '\r\n',
+                'one\r\ntwo\r\n',
+                '--AaB03x\r\n',
+                `content-disposition: form-data; name="file${n}"; filename="file${n}.txt"\r\n`,
+                'Content-Type: text/plain\r\n',
+                '\r\n',
+                'hello world\r\n'
+            ].join('');
+        };
+
+        const endParts = () => '--AaB03x--\r\n';
+
+        const payload = [
+            createParts(2),
+            createParts(4),
+            createParts(6),
+            createParts(8),
+            createParts(10),
+            endParts()
+        ].join('');
+
+        const req = new internals.Payload(payload, true);
+        req.headers = { 'content-type': 'multipart/form-data; boundary="AaB03x"' };
+
+        const dispenser = new Pez.Dispenser({ boundary: 'AaB03x', maxParts: 9 });
+
+        const team = new Teamwork.Team();
+        dispenser.once('error', (err) => {
+
+            expect(err).to.exist();
+            expect(err.message).to.equal('Maximum parts exceeded');
+            expect(err.output.statusCode).to.equal(400);
+            team.attend();
+        });
+
+        req.pipe(dispenser);
+        await team.work;
+    });
+
     it('parses a request with "=" in the boundary', async () => {
 
         const payload =
