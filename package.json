@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@hapi/code": "8.x.x",
-    "@hapi/eslint-plugin": "*",
+    "@hapi/eslint-plugin": "5.x.x",
     "@hapi/lab": "24.x.x",
     "@hapi/teamwork": "5.x.x",
     "@hapi/wreck": "17.x.x",
