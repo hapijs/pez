@@ -1,5 +1,5 @@
 {
-  "name": "@commercial/pez",
+  "name": "pez",
   "description": "Multipart parser",
   "version": "2.2.1",
   "repository": "git://github.com/hapijs/pez",
@@ -13,17 +13,17 @@
     "parser"
   ],
   "dependencies": {
-    "@commercial/b64": "3.x.x",
-    "@commercial/boom": "5.x.x",
-    "@commercial/content": "^3.1.1",
-    "@commercial/hoek": "4.x.x",
-    "@commercial/nigel": "2.x.x"
+    "b64": "3.x.x",
+    "boom": "5.x.x",
+    "content": "^3.1.1",
+    "hoek": "4.x.x",
+    "nigel": "2.x.x"
   },
   "devDependencies": {
     "code": "4.x.x",
     "form-data": "2.x.x",
     "lab": "14.x.x",
-    "@commercial/wreck": "12.x.x"
+    "wreck": "12.x.x"
   },
   "scripts": {
     "test": "lab -t 100 -L -a code -l",

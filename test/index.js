@@ -4,14 +4,14 @@ const Fs = require('fs');
 const Http = require('http');
 const Stream = require('stream');
 
-const B64 = require('@commercial/b64');
+const B64 = require('b64');
 const Code = require('code');
-const Content = require('@commercial/content');
+const Content = require('content');
 const FormData = require('form-data');
-const Hoek = require('@commercial/hoek');
+const Hoek = require('hoek');
 const Lab = require('lab');
 const Pez = require('..');
-const Wreck = require('@commercial/wreck');
+const Wreck = require('wreck');
 
 
 const internals = {};
