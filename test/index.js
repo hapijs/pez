@@ -543,6 +543,22 @@ describe('Dispenser', () => {
         await team.work;
     });
 
+    it('errors if the payload size exceeds the byte limit when written directly', async () => {
+
+        const dispenser = new Pez.Dispenser({ boundary: 'AaB03x', maxBytes: 1000 });
+
+        const team = new Teamwork.Team();
+        dispenser.once('error', (err) => {
+
+            expect(err.message).to.equal('Maximum size exceeded');
+            expect(err.output.statusCode).to.equal(413);
+            team.attend();
+        });
+
+        dispenser.write(Buffer.alloc(1001, 0x41));
+        await team.work;
+    });
+
     it('errors if the payload size exceeds the part limit', async () => {
 
         const createParts = (n) => {
